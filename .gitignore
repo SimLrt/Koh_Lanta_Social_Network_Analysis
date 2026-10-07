@@ -1,0 +1,19 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Local and temporary files
+.DS_Store
+.Rhistory
+.RData
+~$*.xlsx
+
+# Scraper source is not needed to reproduce the R analysis
+Scraping*/

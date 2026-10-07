@@ -1,0 +1,532 @@
+﻿Id;Nom;Indice;Jours_survie;Victoires;Saisons;Nbr_participations
+claude-2010;Claude;100.0;131;22;Viêtnam — 2010 | La Revanche des Héros — 2012 | L'Île des Héros — 2020 | La Légende — 2021;4
+gregoire-2007;Grégoire;89.78;51;8;Palawan — 2007 | Le Choc des Heros — 2010;2
+teheiura-2011;Teheiura;88.98;129;17;Raja Ampat — 2011 | La Revanche des Héros — 2012 | La Nouvelle Édition — 2014 | L'Île des Héros — 2020 | La Légende — 2021;5
+jade-2007;Jade;87.14;95;9;Palawan — 2007 | Le Retour des Héros — 2009 | La Légende — 2021;3
+marc-2015;Marc;80.3;40;4;Johor — 2015;1
+laurent-2011;Laurent;78.26;100;8;Raja Ampat — 2011 | La Nouvelle Édition — 2014 | La Légende — 2021;3
+ugo-2012;Ugo;77.95;115;11;Malaisie — 2012 | La Légende — 2021 | La Tribu Maudite — 2024 | All Stars — 2026;4
+francois-david-2006;François-David;73.09;54;6;Vanuatu — 2006 | Le Retour des Héros — 2009;2
+martin-2011;Martin;72.66;62;9;Raja Ampat — 2011 | La Nouvelle Édition — 2014;2
+philippe-2010;Philippe;72.18;60;6;Viêtnam — 2010 | La Nouvelle Édition — 2014;2
+benoit-2016;Benoît;69.17;42;4;L'Île au trésor — 2016;1
+clemence-2005;Clémence;69.04;105;6;Pacifique — 2005 | Le Retour des Héros — 2009 | Le Combat des Héros — 2018 | La Légende — 2021;4
+bertrand-2008;Bertrand;68.57;62;9;Caramoan — 2008 | La Revanche des Héros — 2012;2
+pascal-2016;Pascal;66.17;72;6;Thaïlande — 2016 | Le Combat des Héros — 2018;2
+christina-2009;Christina;63.46;65;8;Palau — 2009 | Le Choc des Heros — 2010 | La Nouvelle Édition — 2014 | All Stars — 2026;4
+freddy-2009;Freddy;62.94;73;7;Palau — 2009 | Le Choc des Heros — 2010 | La Revanche des Héros — 2012 | La Nouvelle Édition — 2014 | La Légende — 2021 | All Stars — 2026;6
+maxime-2019;Maxime;62.22;45;6;La Guerre des Chefs — 2019 | La Légende — 2021;2
+gilles-2001;Gilles;58.65;43;4;Les Aventuriers de Koh-Lanta — 2001;1
+naoil-2020;Naoil;54.63;32;4;L'Île des Héros — 2020 | All Stars — 2026;2
+philippe-2012b;Phil;54.34;96;8;Malaisie — 2012 | La Nouvelle Édition — 2014 | La Légende — 2021;3
+sebastien-2017;Sébastien;54.31;38;5;Cambodge — 2017;1
+andre-2017;André;54.16;41;4;Fidji — 2017;1
+romuald-2004;Romuald;53.76;59;5;Panama — 2004 | Le Retour des Héros — 2009;2
+nicolas-2016;Nicolas;53.71;34;5;Thaïlande — 2016;1
+maxine-2021;Maxine;52.22;36;4;Les Armes Secrètes — 2021;1
+amel-2002;Amel;51.91;41;2;Nicoya — 2002 | Le Retour des Héros — 2009;2
+raphael-2004;Raphaël;50.97;40;2;Panama — 2004;1
+yassin-2017;Yassin;50.71;46;3;Cambodge — 2017 | Le Combat des Héros — 2018 | All Stars — 2026;3
+moussa-2003;Moussa;49.79;91;5;Bocas del Toro — 2003 | La Revanche des Héros — 2012 | L'Île des Héros — 2020 | All Stars — 2026;4
+mohamed-2005;Mohamed;49.71;46;4;Pacifique — 2005 | Le Choc des Heros — 2010;2
+francis-2005;Francis;49.7;51;3;Pacifique — 2005 | La Revanche des Héros — 2012;2
+frederic-2023;Frédéric;47.74;67;5;Le Feu Sacré — 2023 | La Tribu Maudite — 2024;2
+cynthia-2026;Cynthia;47.34;39;5;Les Reliques du destin — 2026;1
+alexandra-2020b;Alexandra;47.06;68;2;Les 4 Terres — 2020 | La Légende — 2021;2
+isabelle-2003;Isabelle;46.61;40;3;Bocas del Toro — 2003;1
+nicolas-2002;Nicolas;46.24;46;2;Nicoya — 2002 | La Revanche des Héros — 2012;2
+francois-xavier-2002;François-Xavier;46.05;30;2;Nicoya — 2002;1
+jeremy-2016;Jérémy;45.18;65;3;L'Île au trésor — 2016 | Le Combat des Héros — 2018;2
+gerard-2011;Gérard;44.27;41;3;Raja Ampat — 2011;1
+clementine-2017;Clémentine;44.19;77;4;Cambodge — 2017 | Le Combat des Héros — 2018 | La Légende — 2021 | All Stars — 2026;4
+lola-2020;Lola;43.37;39;4;Les 4 Terres — 2020 | All Stars — 2026;2
+charlotte-2024;Charlotte;43.2;40;4;La Tribu Maudite — 2024 | All Stars — 2026;2
+ilyesse-2024;Ilyesse;43.13;40;4;La Tribu Maudite — 2024;1
+emilie-2006;Émilie;42.85;52;3;Vanuatu — 2006 | Le Retour des Héros — 2009;2
+francois-2022;François;42.55;39;5;Le Totem Maudit — 2022;1
+helene-2003;Hélène;42.24;34;3;Bocas del Toro — 2003;1
+loic-2020;Loïc;41.58;71;5;Les 4 Terres — 2020 | La Légende — 2021;2
+tiffany-2017;Tiffany;40.65;55;3;Fidji — 2017 | Le Combat des Héros — 2018;2
+patrick-2009;Patrick;40.6;68;2;Palau — 2009 | La Revanche des Héros — 2012 | La Légende — 2021;3
+frederic-2008;Frédéric;39.86;40;4;Caramoan — 2008;1
+myriam-2010;Myriam;39.67;18;3;Le Choc des Heros — 2010;1
+nicolas-2023;Nicolas;39.28;40;4;Le Feu Sacré — 2023 | All Stars — 2026;2
+frederic-2017;Frédéric;39.23;40;1;Cambodge — 2017;1
+jonathan-2021;Jonathan;39.11;35;3;Les Armes Secrètes — 2021;1
+bruno-2016;Bruno;38.02;40;1;L'Île au trésor — 2016;1
+alix-2020;Alix;37.99;65;3;Les 4 Terres — 2020 | La Légende — 2021;2
+lea-s-2024;Léa S.;37.77;38;3;Les Chasseurs d'immunite — 2024;1
+christelle-2008;Christelle;37.11;78;2;Caramoan — 2008 | Le Retour des Héros — 2009 | La Légende — 2021;3
+wendy-2016;Wendy;36.81;40;2;Thaïlande — 2016;1
+brice-2020;Brice;36.62;40;3;Les 4 Terres — 2020;1
+cindy-2019;Cindy;36.51;46;2;La Guerre des Chefs — 2019 | La Légende — 2021;2
+chantal-2015;Chantal;36.48;45;3;Johor — 2015 | Le Combat des Héros — 2018;2
+maud-2019;Maud;36.31;39;2;La Guerre des Chefs — 2019;1
+javier-2012;Javier;36.09;52;2;Malaisie — 2012 | Le Combat des Héros — 2018;2
+philippe-2004;Philippe;36.08;49;1;Panama — 2004 | Le Retour des Héros — 2009;2
+bastien-2022;Bastien;36.05;39;3;Le Totem Maudit — 2022;1
+sam-2020;Sam;36.02;54;1;L'Île des Héros — 2020 | La Légende — 2021;2
+beatrice-2002;Béatrice;35.84;27;2;Nicoya — 2002;1
+claire-2017;Claire;35.69;35;4;Cambodge — 2017;1
+gaelle-2025;Gaëlle;35.41;40;1;La Revanche des 4 Terres — 2025;1
+ludovic-2006;Ludovic;35.12;55;3;Vanuatu — 2006 | Le Combat des Héros — 2018;2
+william-2001;William;34.98;36;3;Les Aventuriers de Koh-Lanta — 2001;1
+magalie-2017;Magalie;34.94;41;3;Fidji — 2017;1
+brice-2012;Brice;34.91;42;2;Malaisie — 2012;1
+steeve-2019;Steeve;34.2;39;2;La Guerre des Chefs — 2019;1
+karima-2016;Karima;33.88;41;3;Thaïlande — 2016 | La Légende — 2021;2
+delphine-2003;Delphine;33.72;40;1;Bocas del Toro — 2003;1
+antoine-2003;Tony;33.64;54;3;Bocas del Toro — 2003 | Le Retour des Héros — 2009;2
+kevin-2007;Kevin;33.44;40;2;Palawan — 2007;1
+jessica-2015;Jessica;32.87;61;3;Johor — 2015 | L'Île des Héros — 2020;2
+melissa-2015;Mélissa;31.87;39;2;Johor — 2015;1
+alexis-2005;Alexis;31.78;38;2;Pacifique — 2005;1
+candice-2016;Candice;31.65;75;4;L'Île au trésor — 2016 | Le Combat des Héros — 2018 | La Légende — 2021;3
+tania-2023;Tania;31.26;40;2;Le Feu Sacré — 2023 | All Stars — 2026;2
+nathalie-2008;Nathalie;31.2;68;3;Caramoan — 2008 | Le Combat des Héros — 2018;2
+isabelle-2002;Isabelle;30.98;33;1;Nicoya — 2002;1
+vincent-2017;Vincent;30.96;40;3;Cambodge — 2017;1
+amelie-2004;Amélie;30.94;37;3;Panama — 2004;1
+alban-2004;Alban;30.58;34;3;Panama — 2004;1
+lucie-2021;Lucie;30.52;36;1;Les Armes Secrètes — 2021;1
+fabrice-2020;Fabrice;30.47;35;1;Les 4 Terres — 2020;1
+maud-2002;Maud;30.46;59;1;Nicoya — 2002 | La Revanche des Héros — 2012;2
+arnaud-2021;Arnaud;30.04;34;2;Les Armes Secrètes — 2021;1
+guenaelle-2001;Guénaëlle;29.99;64;2;Les Aventuriers de Koh-Lanta — 2001 | La Revanche des Héros — 2012;2
+raphaele-2009;Raphaële;29.43;47;2;Palau — 2009 | Le Combat des Héros — 2018;2
+coumba-2005;Coumba;28.88;95;4;Pacifique — 2005 | Le Choc des Heros — 2010 | La Revanche des Héros — 2012 | La Légende — 2021;4
+laure-2021;Laure;28.77;34;2;Les Armes Secrètes — 2021 | All Stars — 2026;2
+freddy-2016;Freddy;28.58;41;2;L'Île au trésor — 2016;1
+louis-laurent-2009;Louis-Laurent;28.49;27;2;Palau — 2009;1
+sebastien-2006;Sébastien;28.44;39;3;Vanuatu — 2006;1
+marianne-2002;Marianne;27.83;39;2;Nicoya — 2002;1
+gilles-2023;Gilles;27.82;29;4;Le Feu Sacré — 2023;1
+aurelien-2019;Aurélien;27.8;38;2;La Guerre des Chefs — 2019;1
+vanessa-2012;Vanessa;27.54;41;2;Malaisie — 2012;1
+cyril-2019;Cyril;27.45;37;1;La Guerre des Chefs — 2019;1
+angelique-2020;Angélique;27.3;38;2;Les 4 Terres — 2020;1
+linda-2004;Linda;27.21;59;2;Panama — 2004 | Le Choc des Heros — 2010;2
+mathilde-2017;Mathilde;26.78;39;1;Cambodge — 2017;1
+clarisse-2026;Clarisse;26.69;39;3;Les Reliques du destin — 2026;1
+kader-2009;Kader;26.63;36;2;Palau — 2009;1
+moundir-2003;Moundir;26.63;63;2;Bocas del Toro — 2003 | Le Retour des Héros — 2009 | La Nouvelle Édition — 2014;3
+cassandre-2016;Cassandre;26.58;46;1;Thaïlande — 2016 | Le Combat des Héros — 2018;2
+sebastien-2015;Sébastien;26.29;37;2;Johor — 2015;1
+quentin-2023;Quentin;25.9;38;3;Le Feu Sacré — 2023;1
+gabriel-2016;Gabriel;25.89;39;2;Thaïlande — 2016;1
+jerome-b-2025;Jérôme (Catalan);25.87;40;5;La Revanche des 4 Terres — 2025;1
+simon-2007;Simon;25.48;38;2;Palawan — 2007;1
+filomene-2007;Filomène;25.15;45;1;Palawan — 2007 | Le Retour des Héros — 2009;2
+dylan-2017;Dylan;24.68;23;1;Cambodge — 2017 | Le Combat des Héros — 2018;2
+fabian-2017;Fabian;24.16;30;1;Fidji — 2017;1
+jesta-2016;Jesta;24.08;42;1;L'Île au trésor — 2016;1
+patrick-2007;Patrick;24.04;37;2;Palawan — 2007;1
+bernard-2012;Bernard;23.86;40;1;Malaisie — 2012;1
+dorian-2020;Dorian;23.77;39;0;Les 4 Terres — 2020 | All Stars — 2026;2
+jean-bernard-2008;Jean-Bernard;23.73;37;1;Caramoan — 2008 | Le Retour des Héros — 2009;2
+sandrine-2017b;Sandrine;23.63;40;1;Fidji — 2017;1
+charles-2012;Charles;23.36;37;1;Malaisie — 2012;1
+ella-2011;Ella;23.24;40;1;Raja Ampat — 2011;1
+marie-2006;Marie;22.82;37;2;Vanuatu — 2006;1
+meissa-2024;Meïssa;22.78;38;3;Les Chasseurs d'immunite — 2024;1
+ludivine-2016;Ludivine;22.76;39;2;L'Île au trésor — 2016;1
+laetitia-2021;Laëtitia;22.74;26;1;Les Armes Secrètes — 2021;1
+bernard-2002;Bernard;22.54;39;1;Nicoya — 2002;1
+clemence-2023;Clémence;22.36;32;2;Le Feu Sacré — 2023;1
+jerome-2005;Jérôme;22.32;25;1;Pacifique — 2005;1
+jeff-2015;Jeff;22.02;29;1;Johor — 2015;1
+cecile-b-2024;Cécile B;21.98;39;2;La Tribu Maudite — 2024;1
+isabelle-2009;Isabelle;21.6;54;1;Palau — 2009 | La Revanche des Héros — 2012 | La Nouvelle Édition — 2014;3
+carole-2008;Carole;21.57;36;1;Caramoan — 2008;1
+gaelle-2006;Gaëlle;21.45;34;1;Vanuatu — 2006;1
+sophie-2004;Sophie;21.4;31;1;Panama — 2004;1
+christophe-2008;Christophe;20.98;44;0;Caramoan — 2008 | Le Choc des Heros — 2010;2
+nicolas-2019;Nicolas;20.49;33;1;La Guerre des Chefs — 2019;1
+alain-2016;Alain;20.24;37;1;Thaïlande — 2016;1
+jacques-2024;Jacques;20.18;39;1;La Tribu Maudite — 2024 | All Stars — 2026;2
+ines-2020;Inès;20.17;32;0;L'Île des Héros — 2020;1
+cecilia-2016;Cécilia;20.11;38;1;Thaïlande — 2016;1
+bruno-2015;Bruno;20.06;38;1;Johor — 2015;1
+guillaume-2026;Guillaume;19.95;39;5;Les Reliques du destin — 2026;1
+fabrice-2024;Fabrice;19.81;21;2;La Tribu Maudite — 2024;1
+stephane-2016;Stéphane;19.61;36;1;L'Île au trésor — 2016;1
+romain-2001;Romain;19.54;41;1;Les Aventuriers de Koh-Lanta — 2001;1
+michele-2001;Michèle;19.14;33;1;Les Aventuriers de Koh-Lanta — 2001;1
+melanie-2017;Mélanie;19.13;36;1;Fidji — 2017;1
+laura-2023;Laura;19.07;35;2;Le Feu Sacré — 2023;1
+kunle-2010;Kunlé;18.86;38;1;Viêtnam — 2010;1
+carine-2016;Carine;18.79;29;1;Thaïlande — 2016;1
+maxime-2025;Maxime;18.73;33;3;La Revanche des 4 Terres — 2025 | All Stars — 2026;2
+beatrice-2019;Béatrice;18.73;22;2;La Guerre des Chefs — 2019;1
+marylou-2012;Marylou;18.72;28;2;Malaisie — 2012;1
+noemie-2025;Noémie;18.7;35;2;La Revanche des 4 Terres — 2025;1
+ava-2020;Ava;18.68;35;0;Les 4 Terres — 2020;1
+veronique-2010;Véronique;18.61;39;1;Viêtnam — 2010;1
+steve-2016;Steve;18.4;26;0;Thaïlande — 2016;1
+thomas-2021;Thomas;18.36;30;1;Les Armes Secrètes — 2021;1
+marguerite-2017;Marguerite;18.25;39;1;Fidji — 2017;1
+amri-2024;Amri;18.22;37;3;Les Chasseurs d'immunite — 2024;1
+romain-2017;Romain;18.14;36;1;Fidji — 2017;1
+frederique-2010;Frédérique;17.92;14;1;Le Choc des Heros — 2010;1
+louana-2022;Louana;17.91;31;3;Le Totem Maudit — 2022;1
+flavio-2021;Flavio;17.9;33;1;Les Armes Secrètes — 2021;1
+jody-2020;Jody;17.75;29;0;Les 4 Terres — 2020;1
+maryline-2007;Maryline;17.75;39;0;Palawan — 2007;1
+francoise-2001;Françoise;17.71;40;1;Les Aventuriers de Koh-Lanta — 2001;1
+hugo-2026;Hugo;17.61;38;3;Les Reliques du destin — 2026;1
+patricia-2011;Patricia;17.36;43;0;Raja Ampat — 2011 | La Revanche des Héros — 2012;2
+maxime-2017;Maxime;17.17;33;1;Fidji — 2017;1
+geraldine-2022;Géraldine;17.1;39;1;Le Totem Maudit — 2022;1
+daniel-2026;Daniel;17.08;37;3;Les Reliques du destin — 2026;1
+jean-2024;Jean;16.97;32;4;Les Chasseurs d'immunite — 2024;1
+laurent-2007;Laurent;16.88;34;1;Palawan — 2007;1
+julie-2023;Julie;16.8;39;0;Le Feu Sacré — 2023;1
+rodolphe-2009;Rodolphe;16.56;33;1;Palau — 2009;1
+sebastien-2017b;Sébastien;16.26;27;1;Fidji — 2017;1
+wafa-2010;Wafa;16.17;56;0;Viêtnam — 2010 | La Revanche des Héros — 2012;2
+charlotte-2020;Charlotte;16.01;24;1;L'Île des Héros — 2020;1
+sebastien-2020;Sébastien;15.82;19;0;Les 4 Terres — 2020;1
+patricia-2001;Patricia;15.77;42;0;Les Aventuriers de Koh-Lanta — 2001;1
+gustin-2024;Gustin;15.44;33;1;La Tribu Maudite — 2024;1
+jerome-o-2025;Jérôme (Landes);15.19;39;2;La Revanche des 4 Terres — 2025;1
+charlene-2008;Charlène;15.06;27;1;Caramoan — 2008;1
+myriam-2021;Myriam;14.55;23;1;Les Armes Secrètes — 2021;1
+christopher-2008;Christopher;14.49;22;1;Caramoan — 2008;1
+kaouther-2009;Kaouther;14.48;15;1;Palau — 2009;1
+esteban-2023;Esteban;14.41;34;1;Le Feu Sacré — 2023;1
+thierry-2012;Thierry;14.33;37;0;Malaisie — 2012;1
+helena-2023;Helena;14.22;26;1;Le Feu Sacré — 2023;1
+alexandra-2020;Alexandra;14.19;31;0;L'Île des Héros — 2020;1
+fabienne-2009;Fabienne;13.93;39;0;Palau — 2009 | La Revanche des Héros — 2012;2
+sandro-2017;Sandro;13.92;26;1;Cambodge — 2017;1
+magali-2021;Magali;13.86;33;0;Les Armes Secrètes — 2021;1
+manu-2017;Manu;13.81;21;1;Fidji — 2017;1
+clo-2019;Clo;13.66;38;0;La Guerre des Chefs — 2019;1
+olga-2022;Olga;13.63;37;3;Le Totem Maudit — 2022;1
+louise-2025;Louise;13.61;26;2;La Revanche des 4 Terres — 2025;1
+catherine-2004;Catherine;13.61;46;0;Panama — 2004 | Le Retour des Héros — 2009;2
+veronique-2005;Véronique;13.57;37;0;Pacifique — 2005;1
+corentin-2017;Corentin;13.53;32;0;Cambodge — 2017;1
+marie-france-2020;Marie-France;13.51;22;0;Les 4 Terres — 2020;1
+sandra-2001;Sandra;13.42;25;1;Les Aventuriers de Koh-Lanta — 2001 | La Nouvelle Édition — 2014;2
+olivier-2011;Olivier;13.28;36;0;Raja Ampat — 2011 | Le Combat des Héros — 2018;2
+sara-2012;Sara;13.14;35;0;Malaisie — 2012 | La Nouvelle Édition — 2014 | L'Île des Héros — 2020;3
+laurent-2020;Laurent;13.0;32;0;Les 4 Terres — 2020;1
+erick-2007;Érick;12.89;22;1;Palawan — 2007;1
+regis-2020;Régis;12.76;30;0;L'Île des Héros — 2020;1
+lolo-2016;Lolo;12.66;15;0;Thaïlande — 2016;1
+myriam-2012;Myriam;12.41;39;0;Malaisie — 2012;1
+pierre-2005;Pierre;12.38;34;0;Pacifique — 2005;1
+jacky-2002;Jacky;12.36;18;0;Nicoya — 2002;1
+jean-charles-2022;Jean-Charles;12.35;39;1;Le Totem Maudit — 2022;1
+mohamed-2019;Mohamed;12.14;31;0;La Guerre des Chefs — 2019;1
+alexandre-2019;Alexandre;12.03;19;1;La Guerre des Chefs — 2019;1
+alexandra-2011;Alexandra;11.77;36;0;Raja Ampat — 2011;1
+cedric-2015;Cédric;11.73;34;0;Johor — 2015 | Le Combat des Héros — 2018;2
+theotime-2017;Théotime;11.71;10;0;Fidji — 2017;1
+sebastien-2024;Sébastien;11.64;36;2;Les Chasseurs d'immunite — 2024;1
+cassandre-2024;Cassandre;11.31;36;0;La Tribu Maudite — 2024;1
+christophe-2015;Christophe;11.23;32;0;Johor — 2015;1
+sophia-2024;Sophia;11.19;38;0;La Tribu Maudite — 2024;1
+lola-2026;Lola;11.11;29;2;Les Reliques du destin — 2026;1
+nais-2025;Naïs;11.08;32;1;La Revanche des 4 Terres — 2025;1
+claire-2025;Claire;11.03;39;1;La Revanche des 4 Terres — 2025;1
+mael-2025;Maël;10.95;40;0;La Revanche des 4 Terres — 2025;1
+laurence-2010;Laurence;10.87;43;0;Viêtnam — 2010 | La Nouvelle Édition — 2014;2
+namadia-2012;Namadia;10.69;44;0;Malaisie — 2012 | La Légende — 2021;2
+eric-2020;Eric;10.54;29;0;L'Île des Héros — 2020;1
+maxime-2024;Maxime;10.48;20;1;Les Chasseurs d'immunite — 2024;1
+antonin-2026;Antonin;10.45;34;2;Les Reliques du destin — 2026;1
+pierre-2002;Pierre;10.4;15;0;Nicoya — 2002;1
+regis-2008;Régis;10.38;33;0;Caramoan — 2008;1
+kelly-2017;Kelly;10.23;32;0;Cambodge — 2017;1
+taig-2010;Taïg;10.0;16;0;Le Choc des Heros — 2010;1
+valerie-2003;Valérie;9.99;28;0;Bocas del Toro — 2003;1
+marvyn-2017;Marvyn;9.81;24;0;Fidji — 2017;1
+julie-2016;Julie;9.6;40;0;L'Île au trésor — 2016 | Le Combat des Héros — 2018;2
+megane-2024;Mégane;9.41;32;2;Les Chasseurs d'immunite — 2024;1
+ambre-2022;Ambre;9.11;38;1;Le Totem Maudit — 2022;1
+florence-2011;Florence;9.08;40;0;Raja Ampat — 2011 | La Nouvelle Édition — 2014;2
+victor-2019;Victor;8.94;12;0;La Guerre des Chefs — 2019;1
+aurelie-2010;Aurélie;8.73;32;0;Viêtnam — 2010;1
+hakim-2008;Hakim;8.64;30;0;Caramoan — 2008;1
+aubin-2020;Aubin;8.61;16;0;Les 4 Terres — 2020;1
+julie-2024;Julie;8.6;38;0;Les Chasseurs d'immunite — 2024;1
+alban-2015;Alban;8.58;43;0;Johor — 2015 | Le Combat des Héros — 2018;2
+maxim-2024;Maxim;8.58;30;0;La Tribu Maudite — 2024;1
+virginie-2011;Virginie;8.42;33;0;Raja Ampat — 2011;1
+pierre-marie-2025;Pierre-Marie;8.3;32;1;La Revanche des 4 Terres — 2025;1
+lionel-2026;Lionel;8.26;11;1;Les Reliques du destin — 2026;1
+marine-2010;Marine;7.81;32;0;Viêtnam — 2010 | La Revanche des Héros — 2012;2
+laureen-2016;Laureen;7.48;26;0;Thaïlande — 2016;1
+sebastien-2003;Sébastien;7.43;25;0;Bocas del Toro — 2003;1
+estelle-2020;Estelle;7.32;11;0;Les 4 Terres — 2020;1
+catherine-2006;Catherine;7.27;31;0;Vanuatu — 2006;1
+marjorie-2017;Marjorie;7.26;29;0;Cambodge — 2017;1
+jean-pierre-2010;Jean-Pierre;7.15;18;0;Viêtnam — 2010;1
+manuella-2017;Manuella;7.15;25;0;Cambodge — 2017;1
+angelique-2019;Angélique;7.04;28;0;La Guerre des Chefs — 2019;1
+amir-2016;Amir;7.03;18;0;Thaïlande — 2016;1
+vincent-2021;Vincent;6.99;26;0;Les Armes Secrètes — 2021 | All Stars — 2026;2
+alexandra-2022;Alexandra;6.92;20;1;Le Totem Maudit — 2022;1
+jean-philippe-2022;Jean-Philippe;6.92;16;1;Le Totem Maudit — 2022;1
+alain-2006;Alain;6.89;27;0;Vanuatu — 2006;1
+nessim-2015;Nessim;6.81;26;0;Johor — 2015;1
+ricky-2024;Ricky;6.57;22;1;Les Chasseurs d'immunite — 2024;1
+christine-2005;Christine;6.57;28;0;Pacifique — 2005;1
+catherine-2012;Catherine;6.53;31;0;Malaisie — 2012;1
+jeanluc-2016;Jean-Luc;6.52;18;0;L'Île au trésor — 2016;1
+pascal-2009;Pascal;6.48;24;0;Palau — 2009;1
+yannick-2016;Yannick;6.4;30;0;L'Île au trésor — 2016;1
+camille-2012;Camille;6.37;31;0;Malaisie — 2012 | All Stars — 2026;2
+ahmad-2020;Ahmad;6.34;18;0;L'Île des Héros — 2020;1
+pauline-2024;Pauline;6.26;37;0;Les Chasseurs d'immunite — 2024;1
+adrien-2007;Adrien;6.25;29;0;Palawan — 2007;1
+abdellah-2010;Abdellah;6.1;25;0;Viêtnam — 2010;1
+sophie-2019;Sophie;6.08;25;0;La Guerre des Chefs — 2019;1
+geraldine-2001;Géraldine;5.98;30;0;Les Aventuriers de Koh-Lanta — 2001;1
+jade-2026;Jade;5.91;29;1;Les Reliques du destin — 2026;1
+herve-2021;Hervé;5.86;17;0;Les Armes Secrètes — 2021;1
+maxime-2011;Maxime;5.78;20;0;Raja Ampat — 2011;1
+bertrand-kamal-2020;Bertrand-Kamal;5.68;25;0;Les 4 Terres — 2020;1
+sabira-2004;Sabira;5.64;10;0;Panama — 2004;1
+brice-2019;Brice;5.62;25;0;La Guerre des Chefs — 2019;1
+charlaine-2015;Charlaine;5.62;26;0;Johor — 2015;1
+julien-2016;Julien;5.61;23;0;Thaïlande — 2016;1
+sarah-2024;Sarah;5.6;24;0;La Tribu Maudite — 2024;1
+gege-2011;Gégé;5.59;9;0;Raja Ampat — 2011;1
+alexandra-2016;Alexandra;5.48;27;0;L'Île au trésor — 2016;1
+joaquina-2020;Joaquina;5.44;26;0;Les 4 Terres — 2020;1
+sylvie-2003;Sylvie;5.44;22;0;Bocas del Toro — 2003;1
+anthony-2012;Anthony;5.41;20;0;Malaisie — 2012;1
+franck-2017;Franck;5.4;12;0;Cambodge — 2017;1
+boris-2010;Boris;5.25;22;0;Viêtnam — 2010;1
+grace-2023;Grâce;5.21;23;0;Le Feu Sacré — 2023;1
+hadja-2020;Hadja;5.19;23;0;Les 4 Terres — 2020;1
+celine-2025;Céline;5.18;38;1;La Revanche des 4 Terres — 2025;1
+carinne-2019;Carinne;5.09;9;0;La Guerre des Chefs — 2019;1
+beryl-2016;Béryl;5.07;24;0;L'Île au trésor — 2016;1
+anthony-2011;Anthony;4.91;21;0;Raja Ampat — 2011;1
+stephane-2001;Stéphane;4.86;25;0;Les Aventuriers de Koh-Lanta — 2001;1
+anne-sophie-2023;Anne-Sophie;4.81;24;0;Le Feu Sacré — 2023;1
+alisea-2019;Aliséa;4.74;5;0;La Guerre des Chefs — 2019;1
+rudy-2023;Rudy;4.71;21;0;Le Feu Sacré — 2023;1
+nathalie-2006;Nathalie;4.65;24;0;Vanuatu — 2006;1
+estelle-2006;Estelle;4.61;21;0;Vanuatu — 2006;1
+odile-2004;Odile;4.54;26;0;Panama — 2004;1
+maud-2024;Maud;4.52;22;0;La Tribu Maudite — 2024;1
+zakariya-2026;Zakariya;4.36;36;1;Les Reliques du destin — 2026;1
+shanice-2021;Shanice;4.31;20;0;Les Armes Secrètes — 2021;1
+cindy-2026;Cindy;4.3;31;0;Les Reliques du destin — 2026;1
+delphine-2020;Delphine;4.3;15;0;L'Île des Héros — 2020;1
+emmanuelle-2024;Emmanuelle;4.3;19;0;La Tribu Maudite — 2024;1
+jimmy-2002;Jimmy;4.3;24;0;Nicoya — 2002;1
+richard-2003;Richard;4.3;19;0;Bocas del Toro — 2003;1
+valentin-2010;Valentin;4.3;24;0;Viêtnam — 2010;1
+david-2001;David;4.24;22;0;Les Aventuriers de Koh-Lanta — 2001;1
+mathieu-2020;Mathieu;4.21;11;0;Les 4 Terres — 2020;1
+pholien-2020;Pholien;3.95;16;0;L'Île des Héros — 2020;1
+romain-2016;Romain;3.93;20;0;Thaïlande — 2016;1
+marine-2009;Marine;3.92;13;0;Palau — 2009;1
+andrea-2025;Andréa;3.91;19;0;La Revanche des 4 Terres — 2025;1
+aurelien-2021;Aurélien;3.91;15;0;Les Armes Secrètes — 2021;1
+caroline-2026;Caroline;3.91;38;0;Les Reliques du destin — 2026;1
+sakhone-2005;Sakhone;3.9;22;0;Pacifique — 2005;1
+tugdual-2017;Tugdual;3.86;23;0;Fidji — 2017;1
+caroline-2011;Caroline;3.71;18;0;Raja Ampat — 2011;1
+chloe-2019;Chloé;3.65;14;0;La Guerre des Chefs — 2019;1
+benoit-2020;Benoît;3.63;13;0;L'Île des Héros — 2020;1
+gwendal-2010;Gwendal;3.53;9;0;Le Choc des Heros — 2010;1
+jonathan-2026;Jonathan;3.52;18;0;Les Reliques du destin — 2026;1
+emilie-2019;Émilie;3.51;9;0;La Guerre des Chefs — 2019;1
+melissa-2024;Mélissa;3.46;17;0;La Tribu Maudite — 2024;1
+corinne-2015;Corinne;3.4;21;0;Johor — 2015;1
+yves-2017;Yves;3.33;19;0;Cambodge — 2017;1
+jean-luc-2001;Jean-Luc;3.31;13;0;Les Aventuriers de Koh-Lanta — 2001 | Le Retour des Héros — 2009;2
+alexandre-2003;Alexandre;3.29;16;0;Bocas del Toro — 2003;1
+alexandre-2009;Alexandre;3.29;21;0;Palau — 2009;1
+adonis-2002;Adonis;3.16;21;0;Nicoya — 2002;1
+guillaume-2004;Guillaume;3.16;22;0;Panama — 2004;1
+mathieu-2021;Mathieu;3.05;20;0;Les Armes Secrètes — 2021;1
+candice-2021;Candice;2.92;12;0;Les Armes Secrètes — 2021;1
+lau-2016;Lau;2.83;21;0;L'Île au trésor — 2016;1
+thierry-2005;Thierry;2.75;18;0;Pacifique — 2005;1
+alexandre-2024;Alexandre;2.68;13;0;La Tribu Maudite — 2024;1
+maria-2017;Maria;2.61;19;0;Cambodge — 2017;1
+marie-2012;Marie;2.59;18;0;Malaisie — 2012;1
+felicie-2017;Félicie;2.58;15;0;Cambodge — 2017;1
+virginie-2010;Virginie;2.56;12;0;Viêtnam — 2010;1
+caroline-2017;Caroline;2.5;18;0;Fidji — 2017;1
+audrey-2010;Audrey;2.42;20;0;Viêtnam — 2010;1
+martin-2023;Martin;2.42;18;0;Le Feu Sacré — 2023;1
+philippe-2003;Philippe;2.42;14;0;Bocas del Toro — 2003;1
+carole-2020;Carole;2.38;5;0;Les 4 Terres — 2020;1
+chloe-2007;Chloé;2.38;19;0;Palawan — 2007;1
+mel-2017;Mel;2.38;9;0;Fidji — 2017;1
+cecile-2024;Cécile;2.35;26;0;Les Chasseurs d'immunite — 2024;1
+clemence-2026;Clémence;2.35;5;0;Les Reliques du destin — 2026;1
+karine-2026;Karine;2.35;8;0;Les Reliques du destin — 2026;1
+delisia-2011;Délisia;2.33;15;0;Raja Ampat — 2011;1
+djamel-2010;Djamel;2.28;10;0;Le Choc des Heros — 2010;1
+christine-2023;Christine;2.2;18;0;Le Feu Sacré — 2023;1
+mika-2006;Mika;2.2;18;0;Vanuatu — 2006;1
+nathalie-2004;Nathalie;2.2;19;0;Panama — 2004;1
+julien-2009;Julien;2.19;3;0;Palau — 2009;1
+bastien-2017;Bastien;1.99;18;0;Cambodge — 2017;1
+xavier-2019;Xavier;1.96;16;0;La Guerre des Chefs — 2019;1
+nora-2026;Nora;1.95;14;0;Les Reliques du destin — 2026;1
+paul-2026;Paul;1.95;24;0;Les Reliques du destin — 2026;1
+alain-2008;Alain;1.91;15;0;Caramoan — 2008;1
+eliane-2005;Eliane;1.91;15;0;Pacifique — 2005;1
+jerome-2016;Jérôme;1.91;20;0;L'Île au trésor — 2016;1
+margot-2015;Margot;1.91;19;0;Johor — 2015;1
+sabine-2017;Sabine;1.86;6;0;Cambodge — 2017;1
+benoit-2011;Benoît;1.75;12;0;Raja Ampat — 2011;1
+marie-2024;Marie;1.74;9;0;La Tribu Maudite — 2024;1
+michel-2024;Michel;1.74;15;0;La Tribu Maudite — 2024;1
+frederic-2021;Frédéric;1.71;17;0;Les Armes Secrètes — 2021;1
+may-2017;May;1.71;15;0;Fidji — 2017;1
+linda-2003;Linda;1.68;13;0;Bocas del Toro — 2003;1
+cecile-g-2024;Cécile G;1.59;3;0;La Tribu Maudite — 2024;1
+setha-2022;Setha;1.56;22;0;Le Totem Maudit — 2022;1
+brahma-2017;Brahma;1.46;16;0;Cambodge — 2017;1
+harry-2001;Harry;1.41;16;0;Les Aventuriers de Koh-Lanta — 2001;1
+jean-bernard-2004;Jean-Bernard;1.41;16;0;Panama — 2004;1
+jean-claude-2006;Jean-Claude;1.41;18;0;Vanuatu — 2006;1
+veronique-2007;Véronique;1.41;16;0;Palawan — 2007;1
+thibault-2024;Thibault;1.37;40;2;La Tribu Maudite — 2024;1
+isabelle-2015;Isabelle;1.33;15;0;Johor — 2015;1
+adrien-2020;Adrien;1.28;14;0;Les 4 Terres — 2020;1
+naouel-2011;Naouel;1.27;10;0;Raja Ampat — 2011;1
+jessica-2008;Jessica;1.22;12;0;Caramoan — 2008;1
+marie-cecile-2005;Marie-Cécile;1.22;12;0;Pacifique — 2005;1
+carole-2016;Carole;1.19;12;0;Thaïlande — 2016;1
+marta-2017;Marta;1.19;12;0;Fidji — 2017;1
+benjamin-2023;Benjamin;1.15;14;0;Le Feu Sacré — 2023;1
+claire-2009;Claire;1.08;9;0;Palau — 2009;1
+jennifer-2010;Jennifer;1.08;15;0;Viêtnam — 2010;1
+julie-2003;Julie;1.08;11;0;Bocas del Toro — 2003;1
+sophie-2003;Sophie;0.99;10;0;Bocas del Toro — 2003;1
+gabin-2021;Gabin;0.94;15;0;Les Armes Secrètes — 2021;1
+vanessa-2024;Vanessa;0.89;13;0;La Tribu Maudite — 2024;1
+elodie-2012;Élodie;0.85;15;0;Malaisie — 2012;1
+laurent-2016;Laurent;0.85;15;0;L'Île au trésor — 2016;1
+loic-2015;Loïc;0.85;13;0;Johor — 2015;1
+gael-2001;Gaël;0.79;13;0;Les Aventuriers de Koh-Lanta — 2001;1
+melanie-2007;Mélanie;0.79;13;0;Palawan — 2007;1
+nelly-2002;Nelly;0.79;12;0;Nicoya — 2002;1
+nico-2006;Nico;0.79;12;0;Vanuatu — 2006;1
+vicky-2004;Vicky;0.79;13;0;Panama — 2004;1
+huw-2016;Huw;0.77;9;0;Thaïlande — 2016;1
+caroline-2005;Caroline;0.69;9;0;Pacifique — 2005;1
+morgane-2008;Morgane;0.69;9;0;Caramoan — 2008;1
+lola-2024;Lola;0.67;12;0;La Tribu Maudite — 2024;1
+steve-2011;Steve;0.63;8;0;Raja Ampat — 2011;1
+nathanael-2024;Nathanaël;0.61;13;0;La Tribu Maudite — 2024;1
+anthony-2009;Anthony;0.6;6;0;Palau — 2009;1
+marie-laure-2007;Marie-Laure;0.6;10;0;Palawan — 2007;1
+marie-2021;Marie;0.58;6;0;Les Armes Secrètes — 2021;1
+manon-2015;Manon;0.52;12;0;Johor — 2015;1
+marie-2020;Marie;0.52;10;0;L'Île des Héros — 2020;1
+myriam-2009;Myriam;0.52;2;0;Palau — 2009;1
+valerie-2020;Valérie;0.49;7;0;L'Île des Héros — 2020;1
+elodie-2023;Elodie;0.48;10;0;Le Feu Sacré — 2023;1
+nadine-2012;Nadine;0.48;12;0;Malaisie — 2012;1
+sandrine-2016;Sandrine;0.48;12;0;L'Île au trésor — 2016;1
+catherine-2011;Catherine;0.47;6;0;Raja Ampat — 2011;1
+hada-2017;Hada;0.46;9;0;Cambodge — 2017;1
+celine-2016;Céline;0.43;6;0;Thaïlande — 2016;1
+lisa-2011;Lisa;0.42;3;0;Raja Ampat — 2011;1
+fouzi-2022;Fouzi;0.39;33;0;Le Totem Maudit — 2022;1
+celine-2002;Céline;0.35;9;0;Nicoya — 2002;1
+nicolas-2006;Nicolas;0.35;12;0;Vanuatu — 2006;1
+diane-2020;Diane;0.32;10;0;Les 4 Terres — 2020;1
+joseph-2020;Joseph;0.31;3;0;L'Île des Héros — 2020;1
+irya-2008;Irya;0.3;6;0;Caramoan — 2008;1
+sylvie-2005;Sylvie;0.3;9;0;Pacifique — 2005;1
+alain-2010vn;Alain;0.27;10;0;Viêtnam — 2010;1
+michel-2003;Michel;0.27;10;0;Bocas del Toro — 2003;1
+claudia-2020;Claudia;0.25;2;0;L'Île des Héros — 2020;1
+sylviane-2021;Sylviane;0.22;3;0;Les Armes Secrètes — 2021;1
+alexandre-2023;Alexandre;0.21;9;0;Le Feu Sacré — 2023;1
+benoit-2015;Benoît;0.21;9;0;Johor — 2015;1
+sophie-2016;Sophie;0.21;9;0;L'Île au trésor — 2016;1
+elodie-2021;Élodie;0.19;9;0;Les Armes Secrètes — 2021;1
+marius-2016;Marius;0.19;6;0;Thaïlande — 2016;1
+thomas-2017;Thomas;0.19;7;0;Fidji — 2017;1
+ari-2024;Ari;0.17;6;0;La Tribu Maudite — 2024;1
+samuel-2020;Samuel;0.14;9;0;Les 4 Terres — 2020;1
+frank-2010;Frank;0.13;5;0;Le Choc des Heros — 2010;1
+caroline-2002;Caroline;0.09;6;0;Nicoya — 2002;1
+guillaume-2001;Guillaume;0.09;7;0;Les Aventuriers de Koh-Lanta — 2001;1
+mama-2006;Mama;0.09;10;0;Vanuatu — 2006;1
+pascale-2007;Pascale;0.09;7;0;Palawan — 2007;1
+videli-2004;Vidéli;0.09;10;0;Panama — 2004;1
+cega-2008;Céga;0.08;5;0;Caramoan — 2008;1
+mathieu-2005;Mathieu;0.08;3;0;Pacifique — 2005;1
+candice-2003;Candice;0.07;5;0;Bocas del Toro — 2003;1
+vivien-2010;Vivien;0.07;6;0;Viêtnam — 2010;1
+amandine-2016;Amandine;0.05;6;0;L'Île au trésor — 2016;1
+delphine-2017;Delphine;0.05;3;0;Fidji — 2017;1
+emin-2023;Emin;0.05;6;0;Le Feu Sacré — 2023;1
+laurence-2016;Laurence;0.05;3;0;Thaïlande — 2016;1
+marieanne-2015;Marie-Anne;0.05;6;0;Johor — 2015;1
+mickael-2012;Mickaël;0.05;6;0;Malaisie — 2012;1
+adrien-2025;Adrien;0.0;23;0;La Revanche des 4 Terres — 2025;1
+alexandra-2003;Alexandra;0.0;4;0;Bocas del Toro — 2003;1
+alexis-2024;Alexis;0.0;12;0;Les Chasseurs d'immunite — 2024;1
+ali-2007;Ali;0.0;5;0;Palawan — 2007;1
+alicia-2024;Alicia;0.0;6;0;Les Chasseurs d'immunite — 2024;1
+allan-2025;Allan;0.0;6;0;La Revanche des 4 Terres — 2025;1
+anne-sophie-2022;Anne-Sophie;0.0;28;0;Le Totem Maudit — 2022;1
+aude-2005;Aude;0.0;3;0;Pacifique — 2005;1
+aurelien-2024;Aurélien;0.0;29;0;Les Chasseurs d'immunite — 2024;1
+babeth-2015;Babeth;0.0;3;0;Johor — 2015;1
+benjamin-2022;Benjamin;0.0;11;0;Le Totem Maudit — 2022;1
+benoit-2025;Benoît;0.0;11;0;La Revanche des 4 Terres — 2025;1
+betty-2010;Betty;0.0;3;0;Le Choc des Heros — 2010;1
+celia-2023;Célia;0.0;3;0;Le Feu Sacré — 2023;1
+celine-2022;Céline;0.0;3;0;Le Totem Maudit — 2022;1
+charlie-2016;Charlie;0.0;3;0;Thaïlande — 2016;1
+christian-2025;Christian;0.0;8;0;La Revanche des 4 Terres — 2025;1
+colin-2022;Colin;0.0;23;0;Le Totem Maudit — 2022;1
+cynthiana-2025;Cynthiana;0.0;3;0;La Revanche des 4 Terres — 2025;1
+david-2024;David;0.0;34;0;Les Chasseurs d'immunite — 2024;1
+emilie-2024;Émilie;0.0;14;0;Les Chasseurs d'immunite — 2024;1
+franck-2022;Franck;0.0;4;0;Le Totem Maudit — 2022;1
+francois-2020;François;0.0;5;0;Les 4 Terres — 2020;1
+francoise-2026;Françoise;0.0;3;0;Les Reliques du destin — 2026;1
+frederic-2019;Frédéric;0.0;18;0;La Guerre des Chefs — 2019;1
+frederic-2025;Frédéric;0.0;25;0;La Revanche des 4 Terres — 2025;1
+frederique-2010vn;Frédérique;0.0;3;0;Viêtnam — 2010;1
+jessica-2025;Jessica;0.0;25;0;La Revanche des 4 Terres — 2025;1
+joana-2025;Joana;0.0;29;0;La Revanche des 4 Terres — 2025 | All Stars — 2026;2
+joelle-2009;Joëlle;0.0;1;0;Palau — 2009;1
+johan-2026;Johan;0.0;22;0;Les Reliques du destin — 2026;1
+karine-2006;Karine;0.0;3;0;Vanuatu — 2006;1
+lea-n-2024;Léa N.;0.0;23;0;Les Chasseurs d'immunite — 2024;1
+lili-2022;Lili;0.0;2;0;Le Totem Maudit — 2022;1
+marie-2001;Marie;0.0;3;0;Les Aventuriers de Koh-Lanta — 2001;1
+marine-2017b;Marine;0.0;3;0;Fidji — 2017;1
+matteo-2022;Mattéo;0.0;6;0;Le Totem Maudit — 2022;1
+maxime-2022;Maxime;0.0;31;0;Le Totem Maudit — 2022;1
+mehdi-2025;Mehdi;0.0;11;0;La Revanche des 4 Terres — 2025;1
+melanie-2012;Mélanie;0.0;3;0;Malaisie — 2012;1
+mohamed-2025;Mohamed;0.0;14;0;La Revanche des 4 Terres — 2025;1
+myriam-2016b;Myriam;0.0;3;0;L'Île au trésor — 2016;1
+nathalie-2024;Nathalie;0.0;7;0;Les Chasseurs d'immunite — 2024;1
+nelson-2004;Nelson;0.0;4;0;Panama — 2004;1
+nicolas-2022;Nicolas;0.0;34;0;Le Totem Maudit — 2022;1
+oceane-2024;Océane;0.0;26;0;Les Chasseurs d'immunite — 2024;1
+pauline-2022;Pauline;0.0;25;0;Le Totem Maudit — 2022;1
+pauline-2025;Pauline;0.0;16;0;La Revanche des 4 Terres — 2025;1
+romane-2025;Romane;0.0;10;0;La Revanche des 4 Terres — 2025;1
+samira-2022;Samira;0.0;9;0;Le Totem Maudit — 2022;1
+sarah-2024b;Sarah;0.0;17;0;Les Chasseurs d'immunite — 2024;1
+stephanie-2022;Stéphanie;0.0;17;0;Le Totem Maudit — 2022;1
+steve-2024;Steve;0.0;3;0;Les Chasseurs d'immunite — 2024;1
+ulrich-2026;Ulrich;0.0;19;0;Les Reliques du destin — 2026;1
+valerie-2008;Valérie;0.0;4;0;Caramoan — 2008;1
+william-2024;William;0.0;9;0;Les Chasseurs d'immunite — 2024;1
+xavier-2002;Xavier;0.0;4;0;Nicoya — 2002;1
+yannick-2022;Yannick;0.0;25;0;Le Totem Maudit — 2022;

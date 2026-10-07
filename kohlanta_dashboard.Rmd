@@ -1,0 +1,123 @@
+---
+title: "Réseau de co-participation — Koh-Lanta"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+# Fixe le dossier de travail sur celui du Rmd, quel que soit le dossier de RStudio.
+dossier <- dirname(normalizePath(knitr::current_input()))
+knitr::opts_knit$set(root.dir = dossier)
+source(file.path(dossier, "reseau_koh_lanta.R"))
+```
+
+Row {data-height=140}
+-------------------------------------
+
+### Participants
+
+```{r}
+flexdashboard::valueBox(vcount(reseau), caption = "Participants", icon = "fa-users")
+```
+
+### Saisons
+
+```{r}
+flexdashboard::valueBox(length(unique(unlist(saisons))), caption = "Saisons", icon = "fa-trophy")
+```
+
+### Liens
+
+```{r}
+flexdashboard::valueBox(ecount(reseau), caption = "Liens de co-participation", icon = "fa-link")
+```
+
+Row {data-height=700}
+-------------------------------------
+
+### Graphe interactif du réseau
+
+```{r graphe, fig.width=12, fig.height=8}
+# Plus d'iterations et des liens non ponderes evitent de trop resserrer les noeuds.
+set.seed(1)
+positions <- layout_with_fr(
+  reseau,
+  weights = rep(1, ecount(reseau)),
+  niter = 1500,
+  start.temp = 2 * sqrt(vcount(reseau))
+)
+colnames(positions) <- c("x", "y")
+
+# Tous les liens sont traces dans une seule couche pour garder un rendu rapide.
+extremites <- ends(reseau, E(reseau), names = TRUE)
+x1 <- positions[match(extremites[, 1], V(reseau)$name), "x"]
+y1 <- positions[match(extremites[, 1], V(reseau)$name), "y"]
+x2 <- positions[match(extremites[, 2], V(reseau)$name), "x"]
+y2 <- positions[match(extremites[, 2], V(reseau)$name), "y"]
+x_liens <- as.vector(rbind(x1, x2, NA))
+y_liens <- as.vector(rbind(y1, y2, NA))
+
+nb_participations <- infos_participants$participations
+taille_points <- 6 + 5 * nb_participations
+
+# La teinte distingue les communautes; la luminosite code l'annee recente
+# de participation (plus sombre pour les annees anciennes).
+annees_saisons <- trimws(unique(unlist(strsplit(donnees$Saisons, "|", fixed = TRUE))))
+annees <- as.integer(regmatches(annees_saisons, regexpr("(19|20)[0-9]{2}", annees_saisons)))
+names(annees) <- annees_saisons
+annee_plus_recente <- vapply(saisons, function(x) max(annees[x], na.rm = TRUE), numeric(1))
+annee_plus_recente <- annee_plus_recente[match(V(reseau)$name, id)]
+luminosite <- 38 + 40 * (annee_plus_recente - min(annees)) / (max(annees) - min(annees))
+nb_communautes <- max(membership(communaute))
+teintes <- ((seq_len(nb_communautes) - 1) * 137.508) %% 360
+couleur_points <- grDevices::hcl(
+  h = teintes[membership(communaute)],
+  c = 70,
+  l = luminosite
+)
+
+survol <- paste0(
+  "<b>", infos_participants$Nom, "</b>",
+  "<br>Participations : ", nb_participations,
+  "<br>Indice : ", infos_participants$Indice,
+  "<br>Jours de survie : ", infos_participants$Jours_survie,
+  "<br>Victoires : ", infos_participants$Victoires,
+  "<br>Saisons : ", infos_participants$Saisons
+)
+
+plotly::plot_ly() |>
+  plotly::add_trace(
+    x = x_liens, y = y_liens,
+    type = "scatter", mode = "lines",
+    line = list(color = "rgba(145,155,170,0.35)", width = 1),
+    hoverinfo = "none", showlegend = FALSE
+  ) |>
+  plotly::add_trace(
+    x = positions[, "x"], y = positions[, "y"],
+    type = "scatter", mode = "markers",
+    text = survol, hoverinfo = "text",
+    marker = list(
+      size = taille_points, color = couleur_points,
+      opacity = 0.85, line = list(width = 0.5, color = "white")
+    ),
+    showlegend = FALSE
+  ) |>
+  plotly::layout(
+    dragmode = "zoom", hovermode = "closest",
+    xaxis = list(visible = FALSE, fixedrange = FALSE),
+    yaxis = list(visible = FALSE, fixedrange = FALSE, scaleanchor = "x"),
+    margin = list(l = 0, r = 0, t = 10, b = 0)
+  ) |>
+  plotly::config(scrollZoom = TRUE, displaylogo = FALSE)
+```
+
+### Comment lire le graphe
+
+Survolez un point pour voir les informations du participant. Sa taille augmente avec son nombre de participations. La teinte distingue les communautés; la luminosité représente l’année de sa saison la plus récente : foncée pour les anciennes saisons, claire pour les récentes. La disposition a été recalculée pour mieux espacer les points. Utilisez la molette ou les boutons du graphe pour zoomer, puis faites glisser pour vous déplacer.
+
+Le graphe interactif avec ses attributs est également enregistré dans `kohlanta_reseau.graphml`.
