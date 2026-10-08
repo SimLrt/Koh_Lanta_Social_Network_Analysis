@@ -90,6 +90,68 @@ write.csv(
 )
 ```
 
+```{r analyses-reseau, include=FALSE}
+# Les liens indiquent une co-participation; pour les distances et centralites,
+# ils sont donc traites comme des liens non ponderes.
+degre <- igraph::degree(reseau, mode = "all", loops = FALSE)
+intermediarite <- igraph::betweenness(
+  reseau, directed = FALSE, weights = NA, normalized = TRUE
+)
+centralite_vecteur <- igraph::eigen_centrality(
+  reseau, directed = FALSE, weights = NA, scale = TRUE
+)$vector
+
+# La proximite harmonique reste interpretable meme si le reseau est deconnecte.
+distances_reseau <- igraph::distances(reseau, weights = NA)
+distances_finies <- distances_reseau[is.finite(distances_reseau) & distances_reseau > 0]
+proximite_harmonique <- rowSums(1 / ifelse(
+  is.finite(distances_reseau) & distances_reseau > 0,
+  distances_reseau, Inf
+)) / max(1, vcount(reseau) - 1)
+
+transitivite_locale <- igraph::transitivity(reseau, type = "local")
+transitivite_locale[!is.finite(transitivite_locale)] <- 0
+transitivite_globale <- igraph::transitivity(reseau, type = "global")
+composantes <- igraph::components(reseau)
+tailles_composantes <- sort(composantes$csize, decreasing = TRUE)
+diametre_reseau <- if (length(distances_finies)) max(distances_finies) else 0
+distance_moyenne <- if (length(distances_finies)) mean(distances_finies) else NA_real_
+
+tableau_centralites <- data.frame(
+  Participant = infos_participants$Nom,
+  Participations = infos_participants$participations,
+  Degre = as.numeric(degre),
+  Proximite_harmonique = as.numeric(proximite_harmonique),
+  Intermediarite = as.numeric(intermediarite),
+  Vecteur_propre = as.numeric(centralite_vecteur),
+  check.names = FALSE
+)
+tableau_centralites <- tableau_centralites[order(-tableau_centralites$Degre,
+                                                  -tableau_centralites$Intermediarite), ]
+top_degre <- head(tableau_centralites[order(-tableau_centralites$Degre,
+                                             tableau_centralites$Participant), ], 10)
+top_intermediarite <- head(tableau_centralites[order(-tableau_centralites$Intermediarite,
+                                                       tableau_centralites$Participant), ], 10)
+
+if (ecount(reseau) > 0) {
+  centralite_aretes <- igraph::edge_betweenness(reseau, directed = FALSE, weights = NA)
+  extremites_aretes <- igraph::ends(reseau, igraph::E(reseau), names = TRUE)
+  noms_aretes <- vapply(seq_len(nrow(extremites_aretes)), function(i) {
+    noms <- infos_participants$Nom[match(extremites_aretes[i, ], V(reseau)$name)]
+    paste(noms, collapse = " — ")
+  }, character(1))
+  top_aretes <- head(data.frame(
+    Lien = noms_aretes,
+    Saisons_communes = igraph::E(reseau)$poids,
+    Intermediarite = centralite_aretes
+  )[order(-centralite_aretes), ], 10)
+} else {
+  top_aretes <- data.frame(Lien = character(), Saisons_communes = numeric(), Intermediarite = numeric())
+}
+```
+
+# Graphe
+
 Row {data-height=140}
 -------------------------------------
 
@@ -242,6 +304,59 @@ js_filtres <- r"(function(el, x) {
   const reset = document.getElementById("reinitialiser-filtres");
   const resultCount = document.getElementById("compteur-resultats");
   const graph = el;
+
+  // Interrupteur global : il reste accessible depuis les deux pages du dashboard.
+  if (!document.getElementById("mode-nuit-item")) {
+    const style = document.createElement("style");
+    style.id = "mode-nuit-styles";
+    style.textContent = `
+      body.koh-nuit, body.koh-nuit #dashboard-container,
+      body.koh-nuit .dashboard-page-wrapper,
+      body.koh-nuit .section.level1,
+      body.koh-nuit .chart-wrapper,
+      body.koh-nuit .chart-stage,
+      body.koh-nuit .flowing-content-shim,
+      body.koh-nuit .chart-shim {
+        background-color: #111820 !important;
+        color: #e7edf2 !important;
+      }
+      body.koh-nuit .section.level1 h1,
+      body.koh-nuit .section.level2 h2,
+      body.koh-nuit .section.level3 h3,
+      body.koh-nuit p, body.koh-nuit label,
+      body.koh-nuit .text-muted { color: #e7edf2 !important; }
+      body.koh-nuit .chart-wrapper { border-color: #34414d !important; }
+      body.koh-nuit table, body.koh-nuit th, body.koh-nuit td {
+        color: #e7edf2 !important;
+        background-color: #17212b !important;
+        border-color: #34414d !important;
+      }
+      body.koh-nuit .main-svg .bg { fill: #17212b !important; }
+      body.koh-nuit .main-svg text { fill: #e7edf2 !important; }
+      #mode-nuit-item label { margin: 0; padding: 15px 10px; color: #fff; cursor: pointer; }
+      #mode-nuit-item input { margin-right: 6px; vertical-align: -1px; }
+    `;
+    document.head.appendChild(style);
+
+    const item = document.createElement("li");
+    item.id = "mode-nuit-item";
+    item.innerHTML = '<label><input id="mode-nuit-toggle" type="checkbox"> Mode nuit</label>';
+    const menu = document.querySelector(".navbar .navbar-right");
+    if (menu) menu.appendChild(item);
+    else {
+      item.style.cssText = "position:fixed;top:58px;right:12px;z-index:9999;background:#222;border-radius:4px";
+      document.body.appendChild(item);
+    }
+
+    const toggle = document.getElementById("mode-nuit-toggle");
+    try { toggle.checked = localStorage.getItem("koh-lanta-mode-nuit") === "true"; } catch (e) {}
+    document.body.classList.toggle("koh-nuit", toggle.checked);
+    toggle.addEventListener("change", function() {
+      document.body.classList.toggle("koh-nuit", toggle.checked);
+      try { localStorage.setItem("koh-lanta-mode-nuit", toggle.checked); } catch (e) {}
+    });
+  }
+
   const toArray = value => {
     if (value == null) return [];
     if (Array.isArray(value) || ArrayBuffer.isView(value)) return Array.from(value);
@@ -318,3 +433,108 @@ htmltools::tagList(
 Recherchez un participant par son nom et choisissez une ou plusieurs saisons dans la liste (Cmd/Ctrl + clic). Les points hors saisons sélectionnées disparaissent; la recherche met en évidence les noms correspondants et affiche le nombre de résultats. « Tout afficher » réinitialise les filtres. Les liens restent en arrière-plan pour garder le contexte du réseau. Survolez un point pour ses informations; sa taille augmente avec son nombre de participations. La couleur correspond à la saison la plus récente du participant. Utilisez la molette pour zoomer et faites glisser pour vous déplacer.
 
 Le graphe avec ses attributs est également enregistré dans `exports/kohlanta_reseau.graphml`.
+
+# Analyses du réseau
+
+Row {data-height=140}
+-------------------------------------
+
+### Degré moyen
+
+```{r}
+flexdashboard::valueBox(round(mean(degre), 2), caption = "Nombre moyen de co-participants", icon = "fa-share-alt")
+```
+
+### Composantes
+
+```{r}
+flexdashboard::valueBox(composantes$no, caption = "Groupes séparés", icon = "fa-object-group")
+```
+
+### Transitivité
+
+```{r}
+flexdashboard::valueBox(round(transitivite_globale, 3), caption = "Transitivité globale", icon = "fa-link")
+```
+
+### Diamètre
+
+```{r}
+flexdashboard::valueBox(diametre_reseau, caption = "Diamètre (liens)", icon = "fa-arrows-alt")
+```
+
+Row {data-height=440}
+-------------------------------------
+
+### Distribution des degrés
+
+```{r}
+plotly::plot_ly(x = ~degre, type = "histogram", nbinsx = 20,
+                marker = list(color = "#287D66")) |>
+  plotly::layout(xaxis = list(title = "Nombre de co-participants"),
+                 yaxis = list(title = "Nombre de participants"),
+                 bargap = 0.08)
+```
+
+### Participants les plus connectés
+
+```{r}
+plotly::plot_ly(top_degre, x = ~Degre,
+                y = ~stats::reorder(Participant, Degre),
+                type = "bar", orientation = "h",
+                marker = list(color = "#287D66")) |>
+  plotly::layout(xaxis = list(title = "Degré"), yaxis = list(title = ""),
+                 margin = list(l = 130))
+```
+
+Row {data-height=480}
+-------------------------------------
+
+### Centralités des participants
+
+Le degré compte les co-participants directs. L’intermédiarité repère les participants qui relient différentes parties du réseau. La proximité harmonique tient compte des distances même lorsque le réseau est séparé en plusieurs groupes. La centralité de vecteur propre favorise les participants reliés à d’autres participants centraux.
+
+```{r}
+knitr::kable(
+  head(tableau_centralites, 15),
+  digits = 3,
+  col.names = c("Participant", "Participations", "Degré", "Proximité harmonique", "Intermédiarité", "Vecteur propre"),
+  caption = "15 participants les plus connectés"
+)
+```
+
+### Participants qui relient le réseau
+
+```{r}
+plotly::plot_ly(top_intermediarite, x = ~Intermediarite,
+                y = ~stats::reorder(Participant, Intermediarite),
+                type = "bar", orientation = "h",
+                marker = list(color = "#A64B5D")) |>
+  plotly::layout(xaxis = list(title = "Intermédiarité normalisée"),
+                 yaxis = list(title = ""), margin = list(l = 130))
+```
+
+### Distances et groupes
+
+La distance moyenne est calculée entre les paires reliées. Le diamètre correspond à la plus grande distance minimale observée dans une composante. Les `r composantes$no` composantes comprennent `r tailles_composantes[1]` participants dans la plus grande.
+
+Distance moyenne entre participants reliés : **`r if (is.finite(distance_moyenne)) round(distance_moyenne, 2) else "non disponible"` liens**. Diamètre : **`r diametre_reseau` liens**.
+
+### Liens structurants
+
+```{r}
+knitr::kable(top_aretes, digits = 3,
+             col.names = c("Paire de participants", "Saisons communes", "Intermédiarité du lien"),
+             caption = "Liens avec la plus forte intermédiarité")
+```
+
+### Regroupement local
+
+```{r}
+plotly::plot_ly(x = ~transitivite_locale, type = "histogram", nbinsx = 20,
+                marker = list(color = "#6678A8")) |>
+  plotly::layout(xaxis = list(title = "Transitivité locale"),
+                 yaxis = list(title = "Nombre de participants"), bargap = 0.08)
+```
+
+La transitivité globale mesure la fréquence des triangles de co-participation. La transitivité locale décrit, pour chaque participant, dans quelle mesure ses co-participants ont eux-mêmes participé ensemble.
