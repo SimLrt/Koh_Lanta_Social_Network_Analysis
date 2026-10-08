@@ -1,19 +1,11 @@
-# Python-generated files
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
-
-# Virtual environments
-.venv
-
-# Local and temporary files
+# macOS
 .DS_Store
+
+# Fichiers temporaires R et RStudio
 .Rhistory
 .RData
-~$*.xlsx
+.Rproj.user/
 
-# Scraper source is not needed to reproduce the R analysis
-Scraping*/
+# Environnements locaux
+.venv/
+~$*.xlsx

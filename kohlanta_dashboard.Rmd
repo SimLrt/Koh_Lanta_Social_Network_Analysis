@@ -13,7 +13,81 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 # Fixe le dossier de travail sur celui du Rmd, quel que soit le dossier de RStudio.
 dossier <- dirname(normalizePath(knitr::current_input()))
 knitr::opts_knit$set(root.dir = dossier)
-source(file.path(dossier, "reseau_koh_lanta.R"))
+
+# Charge les donnees depuis Data/ (ou la racine pour garder la compatibilite).
+suppressPackageStartupMessages(library(igraph))
+fichiers_csv <- c(
+  file.path(dossier, "kohlanta_stats_aventuriers.csv"),
+  file.path(dossier, "Data", "kohlanta_stats_aventuriers.csv")
+)
+fichier_csv <- fichiers_csv[file.exists(fichiers_csv)][1]
+if (is.na(fichier_csv)) {
+  stop("CSV introuvable. Placez kohlanta_stats_aventuriers.csv dans le dossier Data/ ou a la racine du projet.")
+}
+dossier_exports <- file.path(dossier, "exports")
+dir.create(dossier_exports, showWarnings = FALSE)
+
+donnees <- read.csv(
+  fichier_csv,
+  sep = ";",
+  dec = ".",
+  fileEncoding = "UTF-8",
+  stringsAsFactors = FALSE
+)
+
+# L'identifiant de fiche garde les homonymes comme des sommets distincts.
+id <- if ("Id" %in% names(donnees)) donnees$Id else donnees$Url
+saisons <- strsplit(donnees$Saisons, "\\s*\\|\\s*", perl = TRUE)
+noms_saisons_source <- unique(unlist(saisons))
+
+# Cree un lien entre toutes les paires de participants de chaque saison.
+listes_aretes <- lapply(noms_saisons_source, function(saison) {
+  participants <- id[vapply(saisons, function(x) saison %in% x, logical(1))]
+  if (length(participants) < 2) return(NULL)
+  paires <- t(combn(participants, 2))
+  data.frame(from = paires[, 1], to = paires[, 2], saison = saison)
+})
+aretes <- do.call(rbind, listes_aretes)
+
+# Regroupe les saisons partagees et calcule leur nombre sur chaque lien.
+aretes <- stats::aggregate(
+  saison ~ from + to,
+  data = aretes,
+  FUN = function(x) paste(sort(unique(x)), collapse = " | ")
+)
+aretes$poids <- lengths(strsplit(aretes$saison, " \\| "))
+
+noeuds <- data.frame(name = id, label = donnees$Nom)
+reseau <- graph_from_data_frame(aretes, directed = FALSE, vertices = noeuds)
+infos_participants <- donnees[match(V(reseau)$name, id), , drop = FALSE]
+infos_participants$participations <- lengths(saisons)[match(V(reseau)$name, id)]
+
+# Detecte les communautes et prepare les fichiers d'export du reseau.
+set.seed(1)
+communaute <- cluster_louvain(reseau, weights = E(reseau)$poids)
+couleurs <- hcl.colors(max(membership(communaute)), "Dark 3")
+taille <- 4 + 5 * sqrt(degree(reseau) / max(degree(reseau)))
+
+png(file.path(dossier_exports, "kohlanta_reseau.png"), width = 1800, height = 1400, res = 160)
+plot(
+  reseau,
+  layout = layout_with_fr(reseau, weights = E(reseau)$poids),
+  vertex.label = NA,
+  vertex.size = taille,
+  vertex.color = couleurs[membership(communaute)],
+  edge.width = 0.3 + log1p(E(reseau)$poids),
+  edge.color = "#AAB2BD",
+  main = "Koh-Lanta : participants des memes saisons"
+)
+dev.off()
+
+write_graph(reseau, file.path(dossier_exports, "kohlanta_reseau.graphml"), format = "graphml")
+write.csv(
+  aretes,
+  file.path(dossier_exports, "kohlanta_aretes.csv"),
+  row.names = FALSE,
+  fileEncoding = "UTF-8"
+)
 ```
 
 Row {data-height=140}
@@ -42,7 +116,7 @@ Row {data-height=700}
 
 ### Graphe interactif du réseau
 
-```{r graphe, fig.width=12, fig.height=8}
+```{r graphe, fig.width=12, fig.height=6}
 # Plus d'iterations et des liens non ponderes evitent de trop resserrer les noeuds.
 set.seed(1)
 positions <- layout_with_fr(
@@ -61,25 +135,28 @@ x2 <- positions[match(extremites[, 2], V(reseau)$name), "x"]
 y2 <- positions[match(extremites[, 2], V(reseau)$name), "y"]
 x_liens <- as.vector(rbind(x1, x2, NA))
 y_liens <- as.vector(rbind(y1, y2, NA))
+id_debut <- as.vector(rbind(extremites[, 1], extremites[, 1], NA_character_))
+id_fin <- as.vector(rbind(extremites[, 2], extremites[, 2], NA_character_))
+ids_aretes <- lapply(seq_along(id_debut), function(i) {
+  if (is.na(id_debut[i])) NULL else c(id_debut[i], id_fin[i])
+})
 
 nb_participations <- infos_participants$participations
 taille_points <- 6 + 5 * nb_participations
 
-# La teinte distingue les communautes; la luminosite code l'annee recente
-# de participation (plus sombre pour les annees anciennes).
-annees_saisons <- trimws(unique(unlist(strsplit(donnees$Saisons, "|", fixed = TRUE))))
-annees <- as.integer(regmatches(annees_saisons, regexpr("(19|20)[0-9]{2}", annees_saisons)))
-names(annees) <- annees_saisons
-annee_plus_recente <- vapply(saisons, function(x) max(annees[x], na.rm = TRUE), numeric(1))
-annee_plus_recente <- annee_plus_recente[match(V(reseau)$name, id)]
-luminosite <- 38 + 40 * (annee_plus_recente - min(annees)) / (max(annees) - min(annees))
-nb_communautes <- max(membership(communaute))
-teintes <- ((seq_len(nb_communautes) - 1) * 137.508) %% 360
-couleur_points <- grDevices::hcl(
-  h = teintes[membership(communaute)],
-  c = 70,
-  l = luminosite
-)
+# Une couleur par saison : les teintes sont espacees, la luminosite augmente
+# avec l'annee. Un participant multi-saisons prend la couleur de sa derniere saison.
+noms_saisons <- unique(trimws(unlist(strsplit(donnees$Saisons, "|", fixed = TRUE))))
+annees <- as.integer(regmatches(noms_saisons, regexpr("(19|20)[0-9]{2}", noms_saisons)))
+ordre_saisons <- order(annees, noms_saisons)
+noms_saisons <- noms_saisons[ordre_saisons]
+annees <- annees[ordre_saisons]
+names(annees) <- noms_saisons
+saison_plus_recente <- vapply(saisons, function(x) x[which.max(annees[x])], character(1))
+saison_plus_recente <- saison_plus_recente[match(V(reseau)$name, id)]
+luminosite_saisons <- 38 + 40 * (annees - min(annees)) / (max(annees) - min(annees))
+teintes_saisons <- ((seq_along(noms_saisons) - 1) * 137.508) %% 360
+palette_saisons <- grDevices::hcl(h = teintes_saisons, c = 85, l = luminosite_saisons)
 
 survol <- paste0(
   "<b>", infos_participants$Nom, "</b>",
@@ -90,34 +167,154 @@ survol <- paste0(
   "<br>Saisons : ", infos_participants$Saisons
 )
 
-plotly::plot_ly() |>
+graphe <- plotly::plot_ly(height = 560, width = "100%") |>
   plotly::add_trace(
     x = x_liens, y = y_liens,
     type = "scatter", mode = "lines",
     line = list(color = "rgba(145,155,170,0.35)", width = 1),
+    customdata = ids_aretes,
     hoverinfo = "none", showlegend = FALSE
-  ) |>
+  )
+
+couleurs_participants <- palette_saisons[match(saison_plus_recente, noms_saisons)]
+graphe <- graphe |>
   plotly::add_trace(
     x = positions[, "x"], y = positions[, "y"],
     type = "scatter", mode = "markers",
     text = survol, hoverinfo = "text",
+    ids = V(reseau)$name,
     marker = list(
-      size = taille_points, color = couleur_points,
-      opacity = 0.85, line = list(width = 0.5, color = "white")
+      size = taille_points, color = couleurs_participants,
+      opacity = 0.88, line = list(width = 0.6, color = "white")
     ),
     showlegend = FALSE
-  ) |>
+  )
+
+graphe |>
   plotly::layout(
     dragmode = "zoom", hovermode = "closest",
     xaxis = list(visible = FALSE, fixedrange = FALSE),
     yaxis = list(visible = FALSE, fixedrange = FALSE, scaleanchor = "x"),
+    showlegend = FALSE,
     margin = list(l = 0, r = 0, t = 10, b = 0)
   ) |>
-  plotly::config(scrollZoom = TRUE, displaylogo = FALSE)
+  plotly::config(scrollZoom = TRUE, displaylogo = FALSE) -> graphe
+
+options_saisons <- lapply(noms_saisons, function(saison) {
+  htmltools::tags$option(value = saison, selected = "selected", saison)
+})
+controles <- htmltools::tags$div(
+  class = "row",
+  htmltools::tags$div(
+    class = "col-sm-4",
+    htmltools::tags$label(`for` = "recherche-participant", "Rechercher un participant"),
+    htmltools::tags$input(
+      id = "recherche-participant", type = "search", class = "form-control",
+      placeholder = "Saisir un nom...", autocomplete = "off"
+    ),
+    htmltools::tags$small(
+      id = "compteur-resultats", class = "text-muted",
+      paste(vcount(reseau), "participants affichés")
+    )
+  ),
+  htmltools::tags$div(
+    class = "col-sm-6",
+    htmltools::tags$label(`for` = "filtre-saisons", "Saisons à afficher (Cmd/Ctrl + clic pour plusieurs)"),
+    htmltools::tags$select(
+      id = "filtre-saisons", class = "form-control",
+      multiple = "multiple", size = 4, options_saisons
+    )
+  ),
+  htmltools::tags$div(
+    class = "col-sm-2",
+    htmltools::tags$label(" "),
+    htmltools::tags$button(
+      id = "reinitialiser-filtres", type = "button", class = "btn btn-default form-control",
+      "Tout afficher"
+    )
+  ),
+  style = "margin: 0 0 8px 0;"
+)
+
+js_filtres <- r"(function(el, x) {
+  const search = document.getElementById("recherche-participant");
+  const seasonSelect = document.getElementById("filtre-saisons");
+  const reset = document.getElementById("reinitialiser-filtres");
+  const resultCount = document.getElementById("compteur-resultats");
+  const graph = el;
+  const toArray = value => {
+    if (value == null) return [];
+    if (Array.isArray(value) || ArrayBuffer.isView(value)) return Array.from(value);
+    return [value];
+  };
+  const nodes = graph.data[1];
+  const namesAndSeasons = toArray(nodes.text).map(tooltip => {
+    const text = String(tooltip || "");
+    const name = (text.match(/<b>([\s\S]*?)<\/b>/i) || [])[1] || "";
+    const seasonText = (text.match(/<br>Saisons\s*:\s*([\s\S]*)$/i) || [])[1] || "";
+    return {
+      name: name.toLocaleLowerCase(),
+      seasons: seasonText.split("|").map(value => value.replace(/<[^>]*>/g, "").trim())
+    };
+  });
+  const baseSizes = toArray(nodes.marker.size);
+
+  function update() {
+    const query = search.value.trim().toLocaleLowerCase();
+    let selected = new Set(Array.from(seasonSelect.selectedOptions, option => option.value));
+    if (selected.size === 0) {
+      selected = new Set(Array.from(seasonSelect.options, option => option.value));
+    }
+    let matchesCount = 0;
+    const opacity = namesAndSeasons.map((participant, index) => {
+      const inSeason = participant.seasons.some(season => selected.has(season));
+      const matchesName = participant.name.includes(query);
+      if (inSeason && matchesName) matchesCount++;
+      if (!inSeason) return 0;
+      if (query && !matchesName) return 0.08;
+      return query ? 1 : 0.88;
+    });
+    const sizes = baseSizes.map((size, index) => {
+      const participant = namesAndSeasons[index];
+      return query && participant.name.includes(query) &&
+        participant.seasons.some(season => selected.has(season)) ? size + 5 : size;
+    });
+    resultCount.textContent = matchesCount + (matchesCount === 1 ? " participant trouvé" : " participants trouvés");
+
+    const edgesOpacity = query || selected.size < seasonSelect.options.length ? 0.10 : 0.35;
+    return Promise.all([
+      Plotly.restyle(graph, {
+        "marker.opacity": [opacity],
+        "marker.size": [sizes]
+      }, [1]),
+      Plotly.restyle(graph, {
+        "line.color": ["rgba(145,155,170," + edgesOpacity + String.fromCharCode(41)]
+      }, [0])
+    ]);
+  }
+
+  let updateTimer;
+  const scheduleUpdate = () => {
+    clearTimeout(updateTimer);
+    updateTimer = setTimeout(update, 80);
+  };
+  search.addEventListener("input", scheduleUpdate);
+  seasonSelect.addEventListener("change", update);
+  reset.addEventListener("click", function() {
+    search.value = "";
+    Array.from(seasonSelect.options).forEach(option => option.selected = true);
+    update();
+  });
+})"
+
+htmltools::tagList(
+  controles,
+  htmlwidgets::onRender(graphe, js_filtres)
+)
 ```
 
 ### Comment lire le graphe
 
-Survolez un point pour voir les informations du participant. Sa taille augmente avec son nombre de participations. La teinte distingue les communautés; la luminosité représente l’année de sa saison la plus récente : foncée pour les anciennes saisons, claire pour les récentes. La disposition a été recalculée pour mieux espacer les points. Utilisez la molette ou les boutons du graphe pour zoomer, puis faites glisser pour vous déplacer.
+Recherchez un participant par son nom et choisissez une ou plusieurs saisons dans la liste (Cmd/Ctrl + clic). Les points hors saisons sélectionnées disparaissent; la recherche met en évidence les noms correspondants et affiche le nombre de résultats. « Tout afficher » réinitialise les filtres. Les liens restent en arrière-plan pour garder le contexte du réseau. Survolez un point pour ses informations; sa taille augmente avec son nombre de participations. La couleur correspond à la saison la plus récente du participant. Utilisez la molette pour zoomer et faites glisser pour vous déplacer.
 
-Le graphe interactif avec ses attributs est également enregistré dans `kohlanta_reseau.graphml`.
+Le graphe avec ses attributs est également enregistré dans `exports/kohlanta_reseau.graphml`.
