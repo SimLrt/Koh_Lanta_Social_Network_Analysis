@@ -214,8 +214,8 @@ ordre_saisons <- order(annees, noms_saisons)
 noms_saisons <- noms_saisons[ordre_saisons]
 annees <- annees[ordre_saisons]
 names(annees) <- noms_saisons
-saison_plus_recente <- vapply(saisons, function(x) x[which.max(annees[x])], character(1))
-saison_plus_recente <- saison_plus_recente[match(V(reseau)$name, id)]
+saison_premiere <- vapply(saisons, function(x) x[which.min(annees[x])], character(1))
+saison_premiere <- saison_premiere[match(V(reseau)$name, id)]
 luminosite_saisons <- 38 + 40 * (annees - min(annees)) / (max(annees) - min(annees))
 teintes_saisons <- ((seq_along(noms_saisons) - 1) * 137.508) %% 360
 palette_saisons <- grDevices::hcl(h = teintes_saisons, c = 85, l = luminosite_saisons)
@@ -238,7 +238,7 @@ graphe <- plotly::plot_ly(height = 560, width = "100%") |>
     hoverinfo = "none", showlegend = FALSE
   )
 
-couleurs_participants <- palette_saisons[match(saison_plus_recente, noms_saisons)]
+couleurs_participants <- palette_saisons[match(saison_premiere, noms_saisons)]
 graphe <- graphe |>
   plotly::add_trace(
     x = positions[, "x"], y = positions[, "y"],
@@ -430,7 +430,7 @@ htmltools::tagList(
 
 ### Comment lire le graphe
 
-Recherchez un participant par son nom et choisissez une ou plusieurs saisons dans la liste (Cmd/Ctrl + clic). Les points hors saisons sélectionnées disparaissent; la recherche met en évidence les noms correspondants et affiche le nombre de résultats. « Tout afficher » réinitialise les filtres. Les liens restent en arrière-plan pour garder le contexte du réseau. Survolez un point pour ses informations; sa taille augmente avec son nombre de participations. La couleur correspond à la saison la plus récente du participant. Utilisez la molette pour zoomer et faites glisser pour vous déplacer.
+Recherchez un participant par son nom et choisissez une ou plusieurs saisons dans la liste (Cmd/Ctrl + clic). Les points hors saisons sélectionnées disparaissent; la recherche met en évidence les noms correspondants et affiche le nombre de résultats. « Tout afficher » réinitialise les filtres. Tous les liens de co-participation sont affichés. Survolez un point pour ses informations; sa taille augmente avec son nombre de participations. La couleur correspond à la première saison du participant. Utilisez la molette pour zoomer et faites glisser pour vous déplacer.
 
 Le graphe avec ses attributs est également enregistré dans `exports/kohlanta_reseau.graphml`.
 
