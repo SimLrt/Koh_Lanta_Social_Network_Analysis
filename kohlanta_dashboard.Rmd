@@ -538,3 +538,9 @@ plotly::plot_ly(x = ~transitivite_locale, type = "histogram", nbinsx = 20,
 ```
 
 La transitivité globale mesure la fréquence des triangles de co-participation. La transitivité locale décrit, pour chaque participant, dans quelle mesure ses co-participants ont eux-mêmes participé ensemble.
+
+# Léna Legendre
+
+# Lucie Gobe
+
+# Simon Le Ruyet
