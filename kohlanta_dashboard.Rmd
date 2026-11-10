@@ -10,7 +10,6 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
-# Fixe le dossier de travail sur celui du Rmd, quel que soit le dossier de RStudio.
 dossier <- dirname(normalizePath(knitr::current_input()))
 knitr::opts_knit$set(root.dir = dossier)
 
@@ -21,9 +20,7 @@ fichiers_csv <- c(
   file.path(dossier, "Data", "kohlanta_stats_aventuriers.csv")
 )
 fichier_csv <- fichiers_csv[file.exists(fichiers_csv)][1]
-if (is.na(fichier_csv)) {
-  stop("CSV introuvable. Placez kohlanta_stats_aventuriers.csv dans le dossier Data/ ou a la racine du projet.")
-}
+
 dossier_exports <- file.path(dossier, "exports")
 dir.create(dossier_exports, showWarnings = FALSE)
 
@@ -528,16 +525,6 @@ knitr::kable(top_aretes, digits = 3,
              caption = "Liens avec la plus forte intermédiarité")
 ```
 
-### Regroupement local
-
-```{r}
-plotly::plot_ly(x = ~transitivite_locale, type = "histogram", nbinsx = 20,
-                marker = list(color = "#6678A8")) |>
-  plotly::layout(xaxis = list(title = "Transitivité locale"),
-                 yaxis = list(title = "Nombre de participants"), bargap = 0.08)
-```
-
-La transitivité globale mesure la fréquence des triangles de co-participation. La transitivité locale décrit, pour chaque participant, dans quelle mesure ses co-participants ont eux-mêmes participé ensemble.
 
 # Léna Legendre
 
