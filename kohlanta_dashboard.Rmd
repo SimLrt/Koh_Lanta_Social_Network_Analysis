@@ -3,7 +3,7 @@ title: "Réseau de co-participation — Koh-Lanta"
 output:
   flexdashboard::flex_dashboard:
     orientation: rows
-    vertical_layout: fill
+    vertical_layout: scroll
     theme: flatly
 ---
 
@@ -88,69 +88,47 @@ write.csv(
 ```
 
 ```{r analyses-reseau, include=FALSE}
-# Les liens indiquent une co-participation; pour les distances et centralites,
-# ils sont donc traites comme des liens non ponderes.
-degre <- igraph::degree(reseau, mode = "all", loops = FALSE)
-intermediarite <- igraph::betweenness(
-  reseau, directed = FALSE, weights = NA, normalized = TRUE
-)
-centralite_vecteur <- igraph::eigen_centrality(
-  reseau, directed = FALSE, weights = NA, scale = TRUE
-)$vector
+# Meme approche que dans GoT.Rmd : graphe non dirige et indicateurs igraph.
+reseau_non_dirige <- igraph::as.undirected(reseau, mode = "collapse")
+reseau_degre <- igraph::degree(reseau_non_dirige, mode = "total")
+closeness <- igraph::closeness(reseau_non_dirige, mode = "all")
+betweenness <- igraph::betweenness(reseau_non_dirige, directed = FALSE)
+eigen_centrality <- igraph::eigen_centrality(reseau_non_dirige, directed = FALSE)
 
-# La proximite harmonique reste interpretable meme si le reseau est deconnecte.
-distances_reseau <- igraph::distances(reseau, weights = NA)
-distances_finies <- distances_reseau[is.finite(distances_reseau) & distances_reseau > 0]
-proximite_harmonique <- rowSums(1 / ifelse(
-  is.finite(distances_reseau) & distances_reseau > 0,
-  distances_reseau, Inf
-)) / max(1, vcount(reseau) - 1)
-
-transitivite_locale <- igraph::transitivity(reseau, type = "local")
-transitivite_locale[!is.finite(transitivite_locale)] <- 0
-transitivite_globale <- igraph::transitivity(reseau, type = "global")
-composantes <- igraph::components(reseau)
-tailles_composantes <- sort(composantes$csize, decreasing = TRUE)
-diametre_reseau <- if (length(distances_finies)) max(distances_finies) else 0
-distance_moyenne <- if (length(distances_finies)) mean(distances_finies) else NA_real_
+distances_reseau <- igraph::distances(reseau_non_dirige)
+distances_reseau <- as.vector(distances_reseau)
+distances_reseau <- distances_reseau[is.finite(distances_reseau) & distances_reseau > 0]
+diametre_reseau <- igraph::diameter(reseau_non_dirige, directed = FALSE)
+transitivite_globale <- igraph::transitivity(reseau_non_dirige, type = "global")
+transitivite_locale <- igraph::transitivity(reseau_non_dirige, type = "local")
 
 tableau_centralites <- data.frame(
   Participant = infos_participants$Nom,
-  Participations = infos_participants$participations,
-  Degre = as.numeric(degre),
-  Proximite_harmonique = as.numeric(proximite_harmonique),
-  Intermediarite = as.numeric(intermediarite),
-  Vecteur_propre = as.numeric(centralite_vecteur),
+  Degre = as.numeric(reseau_degre),
+  Proximite = as.numeric(closeness),
+  Intermediarite = as.numeric(betweenness),
+  Vecteur_propre = as.numeric(eigen_centrality$vector),
+  Transitivite_locale = as.numeric(transitivite_locale),
   check.names = FALSE
 )
-tableau_centralites <- tableau_centralites[order(-tableau_centralites$Degre,
-                                                  -tableau_centralites$Intermediarite), ]
-top_degre <- head(tableau_centralites[order(-tableau_centralites$Degre,
-                                             tableau_centralites$Participant), ], 10)
-top_intermediarite <- head(tableau_centralites[order(-tableau_centralites$Intermediarite,
-                                                       tableau_centralites$Participant), ], 10)
 
-if (ecount(reseau) > 0) {
-  centralite_aretes <- igraph::edge_betweenness(reseau, directed = FALSE, weights = NA)
-  extremites_aretes <- igraph::ends(reseau, igraph::E(reseau), names = TRUE)
-  noms_aretes <- vapply(seq_len(nrow(extremites_aretes)), function(i) {
-    noms <- infos_participants$Nom[match(extremites_aretes[i, ], V(reseau)$name)]
-    paste(noms, collapse = " — ")
-  }, character(1))
-  top_aretes <- head(data.frame(
-    Lien = noms_aretes,
-    Saisons_communes = igraph::E(reseau)$poids,
-    Intermediarite = centralite_aretes
-  )[order(-centralite_aretes), ], 10)
-} else {
-  top_aretes <- data.frame(Lien = character(), Saisons_communes = numeric(), Intermediarite = numeric())
-}
+top_degre <- tableau_centralites[order(-tableau_centralites$Degre), ][1:10, ]
+top_intermediarite <- tableau_centralites[order(-tableau_centralites$Intermediarite), ][1:10, ]
+top_proximite <- tableau_centralites[order(-tableau_centralites$Proximite), ][1:10, ]
+top_vecteur_propre <- tableau_centralites[order(-tableau_centralites$Vecteur_propre), ][1:10, ]
+top_transitivite <- tableau_centralites[order(-tableau_centralites$Transitivite_locale), ][1:10, ]
+
+deg_moy <- mean(reseau_degre)
+deg_med <- median(reseau_degre)
+lignes_moy_med_plot <- data.frame(
+  Indicateur = c("Degré moyen", "Degré médian"),
+  valeur = c(deg_moy, deg_med)
+)
 ```
 
 # Graphe
 
-Row {data-height=140}
--------------------------------------
+## Row {data-height="140"}
 
 ### Participants
 
@@ -170,56 +148,40 @@ flexdashboard::valueBox(length(unique(unlist(saisons))), caption = "Saisons", ic
 flexdashboard::valueBox(ecount(reseau), caption = "Liens de co-participation", icon = "fa-link")
 ```
 
-Row {data-height=700}
--------------------------------------
+## Row {data-height="700"}
 
 ### Graphe interactif du réseau
 
 ```{r graphe, fig.width=12, fig.height=6}
-# Plus d'iterations et des liens non ponderes evitent de trop resserrer les noeuds.
+# Positionne les participants sans utiliser le poids des liens.
 set.seed(1)
-positions <- layout_with_fr(
-  reseau,
-  weights = rep(1, ecount(reseau)),
-  niter = 1500,
-  start.temp = 2 * sqrt(vcount(reseau))
-)
-colnames(positions) <- c("x", "y")
+positions <- layout_with_fr(reseau, weights = NA, niter = 1500,
+                            start.temp = 2 * sqrt(vcount(reseau)))
 
-# Tous les liens sont traces dans une seule couche pour garder un rendu rapide.
-extremites <- ends(reseau, E(reseau), names = TRUE)
-x1 <- positions[match(extremites[, 1], V(reseau)$name), "x"]
-y1 <- positions[match(extremites[, 1], V(reseau)$name), "y"]
-x2 <- positions[match(extremites[, 2], V(reseau)$name), "x"]
-y2 <- positions[match(extremites[, 2], V(reseau)$name), "y"]
-x_liens <- as.vector(rbind(x1, x2, NA))
-y_liens <- as.vector(rbind(y1, y2, NA))
-id_debut <- as.vector(rbind(extremites[, 1], extremites[, 1], NA_character_))
-id_fin <- as.vector(rbind(extremites[, 2], extremites[, 2], NA_character_))
-ids_aretes <- lapply(seq_along(id_debut), function(i) {
-  if (is.na(id_debut[i])) NULL else c(id_debut[i], id_fin[i])
-})
+# Coordonnees des liens, separes par NA pour les tracer en une seule couche.
+liens <- ends(reseau, E(reseau), names = FALSE)
+indices_liens <- as.vector(rbind(liens[, 1], liens[, 2], NA_integer_))
+xy_liens <- positions[indices_liens, , drop = FALSE]
+x_liens <- xy_liens[, 1]
+y_liens <- xy_liens[, 2]
 
-nb_participations <- infos_participants$participations
-taille_points <- 6 + 5 * nb_participations
-
-# Une couleur par saison : les teintes sont espacees, la luminosite augmente
-# avec l'annee. Un participant multi-saisons prend la couleur de sa derniere saison.
+# Chaque participant prend la couleur de sa premiere saison.
 noms_saisons <- unique(trimws(unlist(strsplit(donnees$Saisons, "|", fixed = TRUE))))
 annees <- as.integer(regmatches(noms_saisons, regexpr("(19|20)[0-9]{2}", noms_saisons)))
-ordre_saisons <- order(annees, noms_saisons)
-noms_saisons <- noms_saisons[ordre_saisons]
-annees <- annees[ordre_saisons]
-names(annees) <- noms_saisons
-saison_premiere <- vapply(saisons, function(x) x[which.min(annees[x])], character(1))
+ordre <- order(annees, noms_saisons)
+noms_saisons <- noms_saisons[ordre]
+annees <- annees[ordre]
+luminosite <- 38 + 40 * (annees - min(annees)) / diff(range(annees))
+palette_saisons <- grDevices::hcl(
+  h = ((seq_along(noms_saisons) - 1) * 137.508) %% 360,
+  c = 85, l = luminosite
+)
+saison_premiere <- vapply(saisons, function(x) x[which.min(match(x, noms_saisons))], character(1))
 saison_premiere <- saison_premiere[match(V(reseau)$name, id)]
-luminosite_saisons <- 38 + 40 * (annees - min(annees)) / (max(annees) - min(annees))
-teintes_saisons <- ((seq_along(noms_saisons) - 1) * 137.508) %% 360
-palette_saisons <- grDevices::hcl(h = teintes_saisons, c = 85, l = luminosite_saisons)
 
 survol <- paste0(
   "<b>", infos_participants$Nom, "</b>",
-  "<br>Participations : ", nb_participations,
+  "<br>Participations : ", infos_participants$participations,
   "<br>Indice : ", infos_participants$Indice,
   "<br>Jours de survie : ", infos_participants$Jours_survie,
   "<br>Victoires : ", infos_participants$Victoires,
@@ -228,28 +190,20 @@ survol <- paste0(
 
 graphe <- plotly::plot_ly(height = 560, width = "100%") |>
   plotly::add_trace(
-    x = x_liens, y = y_liens,
-    type = "scatter", mode = "lines",
+    x = x_liens, y = y_liens, type = "scatter", mode = "lines",
     line = list(color = "rgba(145,155,170,0.35)", width = 1),
-    customdata = ids_aretes,
     hoverinfo = "none", showlegend = FALSE
-  )
-
-couleurs_participants <- palette_saisons[match(saison_premiere, noms_saisons)]
-graphe <- graphe |>
+  ) |>
   plotly::add_trace(
-    x = positions[, "x"], y = positions[, "y"],
-    type = "scatter", mode = "markers",
-    text = survol, hoverinfo = "text",
-    ids = V(reseau)$name,
+    x = positions[, 1], y = positions[, 2], type = "scatter", mode = "markers",
+    text = survol, hoverinfo = "text", ids = V(reseau)$name,
     marker = list(
-      size = taille_points, color = couleurs_participants,
+      size = 6 + 5 * infos_participants$participations,
+      color = palette_saisons[match(saison_premiere, noms_saisons)],
       opacity = 0.88, line = list(width = 0.6, color = "white")
     ),
     showlegend = FALSE
-  )
-
-graphe |>
+  ) |>
   plotly::layout(
     dragmode = "zoom", hovermode = "closest",
     xaxis = list(visible = FALSE, fixedrange = FALSE),
@@ -257,7 +211,7 @@ graphe |>
     showlegend = FALSE,
     margin = list(l = 0, r = 0, t = 10, b = 0)
   ) |>
-  plotly::config(scrollZoom = TRUE, displaylogo = FALSE) -> graphe
+  plotly::config(scrollZoom = TRUE, displaylogo = FALSE)
 
 options_saisons <- lapply(noms_saisons, function(saison) {
   htmltools::tags$option(value = saison, selected = "selected", saison)
@@ -301,58 +255,6 @@ js_filtres <- r"(function(el, x) {
   const reset = document.getElementById("reinitialiser-filtres");
   const resultCount = document.getElementById("compteur-resultats");
   const graph = el;
-
-  // Interrupteur global : il reste accessible depuis les deux pages du dashboard.
-  if (!document.getElementById("mode-nuit-item")) {
-    const style = document.createElement("style");
-    style.id = "mode-nuit-styles";
-    style.textContent = `
-      body.koh-nuit, body.koh-nuit #dashboard-container,
-      body.koh-nuit .dashboard-page-wrapper,
-      body.koh-nuit .section.level1,
-      body.koh-nuit .chart-wrapper,
-      body.koh-nuit .chart-stage,
-      body.koh-nuit .flowing-content-shim,
-      body.koh-nuit .chart-shim {
-        background-color: #111820 !important;
-        color: #e7edf2 !important;
-      }
-      body.koh-nuit .section.level1 h1,
-      body.koh-nuit .section.level2 h2,
-      body.koh-nuit .section.level3 h3,
-      body.koh-nuit p, body.koh-nuit label,
-      body.koh-nuit .text-muted { color: #e7edf2 !important; }
-      body.koh-nuit .chart-wrapper { border-color: #34414d !important; }
-      body.koh-nuit table, body.koh-nuit th, body.koh-nuit td {
-        color: #e7edf2 !important;
-        background-color: #17212b !important;
-        border-color: #34414d !important;
-      }
-      body.koh-nuit .main-svg .bg { fill: #17212b !important; }
-      body.koh-nuit .main-svg text { fill: #e7edf2 !important; }
-      #mode-nuit-item label { margin: 0; padding: 15px 10px; color: #fff; cursor: pointer; }
-      #mode-nuit-item input { margin-right: 6px; vertical-align: -1px; }
-    `;
-    document.head.appendChild(style);
-
-    const item = document.createElement("li");
-    item.id = "mode-nuit-item";
-    item.innerHTML = '<label><input id="mode-nuit-toggle" type="checkbox"> Mode nuit</label>';
-    const menu = document.querySelector(".navbar .navbar-right");
-    if (menu) menu.appendChild(item);
-    else {
-      item.style.cssText = "position:fixed;top:58px;right:12px;z-index:9999;background:#222;border-radius:4px";
-      document.body.appendChild(item);
-    }
-
-    const toggle = document.getElementById("mode-nuit-toggle");
-    try { toggle.checked = localStorage.getItem("koh-lanta-mode-nuit") === "true"; } catch (e) {}
-    document.body.classList.toggle("koh-nuit", toggle.checked);
-    toggle.addEventListener("change", function() {
-      document.body.classList.toggle("koh-nuit", toggle.checked);
-      try { localStorage.setItem("koh-lanta-mode-nuit", toggle.checked); } catch (e) {}
-    });
-  }
 
   const toArray = value => {
     if (value == null) return [];
@@ -433,19 +335,18 @@ Le graphe avec ses attributs est également enregistré dans `exports/kohlanta_r
 
 # Analyses du réseau
 
-Row {data-height=140}
--------------------------------------
+## Row {data-height="125"}
 
 ### Degré moyen
 
 ```{r}
-flexdashboard::valueBox(round(mean(degre), 2), caption = "Nombre moyen de co-participants", icon = "fa-share-alt")
+flexdashboard::valueBox(round(deg_moy, 2), caption = "Degré moyen", icon = "fa-share-alt")
 ```
 
-### Composantes
+### Degré médian
 
 ```{r}
-flexdashboard::valueBox(composantes$no, caption = "Groupes séparés", icon = "fa-object-group")
+flexdashboard::valueBox(round(deg_med, 2), caption = "Degré médian", icon = "fa-share-alt")
 ```
 
 ### Transitivité
@@ -460,74 +361,147 @@ flexdashboard::valueBox(round(transitivite_globale, 3), caption = "Transitivité
 flexdashboard::valueBox(diametre_reseau, caption = "Diamètre (liens)", icon = "fa-arrows-alt")
 ```
 
-Row {data-height=440}
--------------------------------------
+## Row {data-height="115"}
 
-### Distribution des degrés
+### Interprétation générale des indicateurs
 
-```{r}
-plotly::plot_ly(x = ~degre, type = "histogram", nbinsx = 20,
-                marker = list(color = "#287D66")) |>
-  plotly::layout(xaxis = list(title = "Nombre de co-participants"),
-                 yaxis = list(title = "Nombre de participants"),
-                 bargap = 0.08)
-```
+Le degré moyen et le degré médian résument le nombre de liens directs typiques. La transitivité globale indique à quel point les participants d’un même voisinage sont aussi reliés entre eux. Le diamètre donne la plus grande distance minimale observée entre deux participants reliés. Ensemble, ces indicateurs décrivent la connectivité, le regroupement et l’étendue du réseau.
 
-### Participants les plus connectés
+## Row {data-height="360"}
+
+### Liens directs entre participants {data-width="50"}
 
 ```{r}
-plotly::plot_ly(top_degre, x = ~Degre,
-                y = ~stats::reorder(Participant, Degre),
-                type = "bar", orientation = "h",
-                marker = list(color = "#287D66")) |>
-  plotly::layout(xaxis = list(title = "Degré"), yaxis = list(title = ""),
-                 margin = list(l = 130))
+degres <- data.frame(degre = as.vector(reseau_degre))
+ggplot2::ggplot(degres) +
+  ggplot2::aes(x = degre) +
+  ggplot2::geom_histogram(fill = "#287D66", color = "white", bins = 20) +
+  ggplot2::geom_vline(data = lignes_moy_med_plot,
+                      ggplot2::aes(xintercept = valeur, colour = Indicateur),
+                      linewidth = 0.8) +
+  ggplot2::labs(x = "Nombre de co-participants", y = "Nombre de participants",
+                colour = NULL) +
+  ggplot2::theme_minimal()
 ```
 
-Row {data-height=480}
--------------------------------------
+### Distances entre participants reliés {data-width="50"}
 
-### Centralités des participants
+```{r}
+ggplot2::ggplot(data.frame(distance = distances_reseau)) +
+  ggplot2::aes(x = distance) +
+  ggplot2::geom_histogram(fill = "#287D66", color = "white", bins = 20) +
+  ggplot2::labs(x = "Distance géodésique (liens)", y = "Nombre de paires reliées") +
+  ggplot2::theme_minimal()
+```
 
-Le degré compte les co-participants directs. L’intermédiarité repère les participants qui relient différentes parties du réseau. La proximité harmonique tient compte des distances même lorsque le réseau est séparé en plusieurs groupes. La centralité de vecteur propre favorise les participants reliés à d’autres participants centraux.
+## Row {data-height="70"}
+
+### Interprétation — degré {data-width="50"}
+
+La distribution montre si la plupart des participants ont un nombre de co-participants similaire ou si quelques-uns concentrent davantage de liens. Les lignes verticales situent la moyenne et la médiane.
+
+### Interprétation — distances {data-width="50"}
+
+Les distances courtes correspondent à des participants proches dans le réseau; une distribution étalée signale des groupes plus éloignés les uns des autres.
+
+## Row {data-height="370"}
+
+### Participants les plus connectés — degré {data-width="50"}
+
+```{r}
+ggplot2::ggplot(top_degre) +
+  ggplot2::aes(x = stats::reorder(Participant, Degre), y = Degre) +
+  ggplot2::geom_col(fill = "#287D66") +
+  ggplot2::coord_flip() +
+  ggplot2::labs(x = NULL, y = "Degré", title = "Top 10 des degrés") +
+  ggplot2::theme_minimal()
+```
+
+### Participants qui servent de ponts — intermédiarité {data-width="50"}
+
+```{r}
+ggplot2::ggplot(top_intermediarite) +
+  ggplot2::aes(x = stats::reorder(Participant, Intermediarite), y = Intermediarite) +
+  ggplot2::geom_col(fill = "#A64B5D") +
+  ggplot2::coord_flip() +
+  ggplot2::labs(x = NULL, y = "Intermédiarité", title = "Top 10 des intermédiaires") +
+  ggplot2::theme_minimal()
+```
+
+## Row {data-height="70"}
+
+### Interprétation — degré {data-width="50"}
+
+Un degré élevé signifie qu’un participant a partagé des saisons avec beaucoup d’autres participants.
+
+### Interprétation — intermédiarité {data-width="50"}
+
+Une intermédiarité élevée signale un participant qui se trouve souvent sur les plus courts chemins et relie ainsi différentes parties du réseau.
+
+## Row {data-height="590"}
+
+### Comparer les participants les plus connectés {data-width="65"}
 
 ```{r}
 knitr::kable(
-  head(tableau_centralites, 15),
+  head(tableau_centralites[order(-tableau_centralites$Degre),
+                           c("Participant", "Degre", "Proximite", "Intermediarite", "Vecteur_propre")], 12),
   digits = 3,
-  col.names = c("Participant", "Participations", "Degré", "Proximité harmonique", "Intermédiarité", "Vecteur propre"),
-  caption = "15 participants les plus connectés"
+  col.names = c("Participant", "Degré", "Proximité", "Intermédiarité", "Vecteur propre"),
+  caption = "12 participants au degré le plus élevé"
 )
 ```
 
-### Participants qui relient le réseau
+### Interprétation — centralités {data-width="35"}
+
+Le tableau compare plusieurs façons d’être central. Un participant peut avoir beaucoup de liens directs sans être celui qui relie le plus de groupes. La proximité mesure la distance aux autres; l’intermédiarité repère les passages fréquents par les plus courts chemins; le vecteur propre valorise les liens avec d’autres participants centraux.
+
+## Row {data-height="500"}
+
+### Les participants les plus proches {data-width="60"}
 
 ```{r}
-plotly::plot_ly(top_intermediarite, x = ~Intermediarite,
-                y = ~stats::reorder(Participant, Intermediarite),
-                type = "bar", orientation = "h",
-                marker = list(color = "#A64B5D")) |>
-  plotly::layout(xaxis = list(title = "Intermédiarité normalisée"),
-                 yaxis = list(title = ""), margin = list(l = 130))
+knitr::kable(top_proximite[, c("Participant", "Proximite")], digits = 3,
+             col.names = c("Participant", "Proximité"),
+             caption = "Top 10 de la centralité de proximité")
 ```
 
-### Distances et groupes
+### Interprétation — proximité {data-width="40"}
 
-La distance moyenne est calculée entre les paires reliées. Le diamètre correspond à la plus grande distance minimale observée dans une composante. Les `r composantes$no` composantes comprennent `r tailles_composantes[1]` participants dans la plus grande.
+Une proximité élevée indique des distances courtes vers les autres participants accessibles dans le réseau.
 
-Distance moyenne entre participants reliés : **`r if (is.finite(distance_moyenne)) round(distance_moyenne, 2) else "non disponible"` liens**. Diamètre : **`r diametre_reseau` liens**.
+## Row {data-height="500"}
 
-### Liens structurants
+### Clustering autour des participants {data-width="60"}
 
 ```{r}
-knitr::kable(top_aretes, digits = 3,
-             col.names = c("Paire de participants", "Saisons communes", "Intermédiarité du lien"),
-             caption = "Liens avec la plus forte intermédiarité")
+knitr::kable(top_transitivite[, c("Participant", "Transitivite_locale")], digits = 3,
+             col.names = c("Participant", "Transitivité locale"),
+             caption = "Top 10 de la transitivité locale")
 ```
 
+### Interprétation — transitivité locale {data-width="40"}
+
+La transitivité locale indique si les co-participants d’une personne ont souvent eux-mêmes partagé une saison. Une valeur élevée décrit un voisinage où ils sont souvent eux-mêmes reliés, signe d’un groupe resserré.
+
+## Row {data-height="500"}
+
+### Participants liés à d’autres participants centraux {data-width="60"}
+
+```{r}
+knitr::kable(top_vecteur_propre[, c("Participant", "Vecteur_propre")], digits = 3,
+             col.names = c("Participant", "Vecteur propre"),
+             caption = "Top 10 de la centralité de vecteur propre")
+```
+
+### Interprétation — vecteur propre {data-width="40"}
+
+Un score élevé indique des participants connectés à d’autres participants eux-mêmes bien connectés.
 
 # Léna Legendre
 
 # Lucie Gobe
 
-# Simon Le Ruyet
+# Lucie Gobe 2
+
+# Conclusion
