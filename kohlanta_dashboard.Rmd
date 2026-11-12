@@ -327,6 +327,12 @@ htmltools::tagList(
 )
 ```
 
+### Introduction
+
+Chaque point représente un participant et chaque lien indique que deux participants ont pris part à au moins une même saison. Le graphe donne ainsi une vue d’ensemble des recouvrements de casting entre les saisons.
+
+## Row {data-height="190"}
+
 ### Comment lire le graphe
 
 Recherchez un participant par son nom et choisissez une ou plusieurs saisons dans la liste (Cmd/Ctrl + clic). Les points hors saisons sélectionnées disparaissent; la recherche met en évidence les noms correspondants et affiche le nombre de résultats. « Tout afficher » réinitialise les filtres. Tous les liens de co-participation sont affichés. Survolez un point pour ses informations; sa taille augmente avec son nombre de participations. La couleur correspond à la première saison du participant. Utilisez la molette pour zoomer et faites glisser pour vous déplacer.
@@ -438,7 +444,7 @@ Un degré élevé signifie qu’un participant a partagé des saisons avec beauc
 
 Une intermédiarité élevée signale un participant qui se trouve souvent sur les plus courts chemins et relie ainsi différentes parties du réseau.
 
-## Row {data-height="590"}
+## Row {data-height="480"}
 
 ### Comparer les participants les plus connectés {data-width="65"}
 
