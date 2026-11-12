@@ -498,10 +498,369 @@ knitr::kable(top_vecteur_propre[, c("Participant", "Vecteur_propre")], digits = 
 
 Un score élevé indique des participants connectés à d’autres participants eux-mêmes bien connectés.
 
+```{r prep-retours, include=FALSE}
+# ---- Données et préparation (identique à analyses_lucie_graphiques.R) ----
+suppressPackageStartupMessages(library(tidyverse))
+SEUIL_RETOURS <- 5   # une saison compte comme "saison de retours" si >= 5 anciens
+FICHIER <- c(file.path(dossier, "Data", "df_kohlanta.csv"),
+             file.path(dossier, "df_kohlanta.csv"))
+FICHIER <- FICHIER[file.exists(FICHIER)][1]
+stopifnot("df_kohlanta.csv introuvable (dans Data/ ou à côté du .Rmd)" = !is.na(FICHIER))
+bleu   <- "#3B6FB6"
+orange <- "#E8743B"
+theme_set(
+  theme_minimal(base_size = 12) +
+    theme(plot.title.position = "plot",
+          plot.title    = element_text(face = "bold"),
+          plot.subtitle = element_text(colour = "grey35"),
+          panel.grid.minor = element_blank())
+)
+
+# Tout est lu en texte, puis les colonnes numériques sont converties à la main :
+# dans le CSV les nombres sont écrits "25.0" (point) ; avec decimal_mark = ","
+# readr prenait le point pour un séparateur de milliers -> 25.0 devenait 250.
+# Séparateur détecté sur la 1re ligne (";" ou ","), noms de colonnes nettoyés
+entete <- readLines(FICHIER, n = 1, encoding = "UTF-8", warn = FALSE)
+sep <- if (str_count(entete, ";") >= str_count(entete, ",")) ";" else ","
+raw <- read_delim(FICHIER, delim = sep,
+                  col_types = cols(.default = col_character()),
+                  na = c("", "NA", "N/A", "-"),
+                  locale = locale(encoding = "UTF-8"),
+                  show_col_types = FALSE)
+names(raw) <- names(raw) %>% str_remove("^\ufeff") %>% str_trim() %>% str_to_lower()
+
+# Le fichier doit contenir 1 ligne par participation avec ces colonnes
+colonnes_requises <- c("slug", "nom", "saison_slug", "annee", "statut", "age", "equipe",
+                       "profession", "jour_elimination", "votes_contre", "epreuves_gagnees")
+manque <- setdiff(colonnes_requises, names(raw))
+if (length(manque))
+  stop("Colonnes manquantes dans ", FICHIER, " : ", paste(manque, collapse = ", "),
+       "\nColonnes trouvées : ", paste(names(raw), collapse = ", "), call. = FALSE)
+
+cols_num <- c("annee", "age", "jour_elimination", "votes_contre",
+              "epreuves_gagnees", "victoires_avant", "saisons_jouees")
+cols_num <- intersect(cols_num, names(raw))
+
+# accepte "25.0" comme "25,0" : la virgule est remplacée par un point
+vers_num <- function(x)
+  suppressWarnings(parse_number(str_replace(as.character(x), ",", "."),
+                                locale = locale(decimal_mark = ".", grouping_mark = "")))
+
+# Diagnostic : quelles valeurs bloquent la conversion en nombre ?
+for (v in cols_num) {
+  bad <- raw[[v]][!is.na(raw[[v]]) &
+                    is.na(suppressWarnings(as.numeric(str_replace(raw[[v]], ",", "."))))]
+  if (length(bad)) cat(v, ": valeurs non numériques ->", paste(unique(bad), collapse = " | "), "\n")
+}
+
+raw <- raw %>% mutate(across(all_of(cols_num), vers_num))
+
+# Garde-fou : l'âge doit être plausible (sinon le problème des décimales est revenu)
+cat("Âge : min", min(raw$age, na.rm = TRUE), "| max", max(raw$age, na.rm = TRUE), "\n")
+stopifnot("Âges > 100 : vérifier la lecture des décimales" = max(raw$age, na.rm = TRUE) <= 100)
+
+part <- raw %>%
+  select(-any_of(c("recherche_google", "url", "photo_url"))) %>%
+  mutate(
+    annee_debut = as.integer(str_extract(slug, "\\d{4}")),
+    est_origine = annee == annee_debut,
+    statut      = replace_na(statut, "Éliminé")   # statut vide = éliminé
+  )
+stopifnot(sum(part$est_origine) == n_distinct(part$slug))
+
+saisons_kl <- part %>%
+  group_by(saison_slug, annee) %>%
+  summarise(n_candidats = n(), n_anciens = sum(!est_origine), .groups = "drop") %>%
+  left_join(
+    part %>% filter(est_origine) %>% group_by(saison_slug) %>%
+      summarise(jour_max  = max(jour_elimination, na.rm = TRUE),
+                votes_tot = sum(votes_contre, na.rm = TRUE), .groups = "drop"),
+    by = "saison_slug") %>%
+  mutate(saison_retours = n_anciens >= SEUIL_RETOURS)
+
+annees_retours <- saisons_kl$annee[saisons_kl$saison_retours]
+
+resume <- part %>%
+  group_by(slug) %>%
+  summarise(
+    n_participations   = n(),
+    n_victoires_saison = sum(statut == "Vainqueur"),
+    annee_retour1      = suppressWarnings(min(as.numeric(annee[!est_origine]))),
+    .groups = "drop") %>%
+  mutate(annee_retour1 = na_if(annee_retour1, Inf))
+
+perso <- part %>%
+  filter(est_origine) %>%
+  select(slug, nom, saison_slug, annee_debut, age, profession, equipe,
+         statut_orig = statut, jour_elimination, votes_contre, epreuves_gagnees) %>%
+  left_join(resume, by = "slug") %>%
+  left_join(saisons_kl %>% select(saison_slug, jour_max, votes_tot, n_candidats),
+            by = "saison_slug") %>%
+  group_by(saison_slug) %>%
+  mutate(rang_survie_pct = percent_rank(jour_elimination),
+         rang_votes_pct  = percent_rank(votes_contre)) %>%
+  ungroup() %>%
+  mutate(
+    revenant          = n_participations > 1,
+    n_retours         = n_participations - 1L,
+    vainqueur_orig    = statut_orig == "Vainqueur",
+    finaliste_orig    = statut_orig %in% c("Vainqueur", "Finaliste"),
+    jours_rel         = jour_elimination / jour_max,
+    votes_par_jour    = votes_contre / jour_elimination,
+    part_votes_saison = votes_contre / votes_tot,
+    log_votes         = log1p(votes_contre),
+    tranche_age       = cut(age, c(17, 25, 35, 45, 100),
+                            labels = c("18-25", "26-35", "36-45", "46+")),
+    opportunites      = map_int(annee_debut, ~ sum(annees_retours > .x)),
+    eligible          = opportunites > 0,
+    statut_orig       = fct_infreq(statut_orig)
+  )
+
+perso_el <- perso %>% filter(eligible)
+
+
+
+# Rend un graphique ggplot dynamique (plotly) comme sur les autres pages.
+# Le titre est déjà donné par l'en-tête ### : on ne garde que le sous-titre
+# (en haut) et la note éventuelle (en bas) du graphique.
+dyn <- function(g, pos_texte = NULL) {
+  lab  <- function(x) tryCatch(g$labels[[x]], error = function(e) NULL)
+  sous <- lab("subtitle"); note <- lab("caption")
+  p <- plotly::plotly_build(plotly::ggplotly(g))
+  # Étiquettes (geom_text) : on force leur position pour qu'elles soient
+  # entièrement dans le blanc, à côté de la barre ("middle right" pour des
+  # barres horizontales, "top center" pour des barres verticales).
+  if (!is.null(pos_texte))
+    p$x$data <- lapply(p$x$data, function(tr) {
+      if (identical(tr$mode, "text")) {
+        tr$textposition <- pos_texte
+        tr$cliponaxis   <- FALSE
+        if (is.character(tr$text)) tr$text <- gsub("\n", "<br>", tr$text)
+      }
+      tr
+    })
+  p <- plotly::layout(
+    p,
+    title  = list(text = if (!is.null(sous)) paste0("<sup>", sous, "</sup>") else "",
+                  x = 0.02, xanchor = "left"),
+    margin = list(t = if (!is.null(sous)) 60 else 30,
+                  b = if (!is.null(note)) 120 else 50)
+  )
+  if (!is.null(note))
+    p <- plotly::layout(p, annotations = list(list(
+      text = gsub("\n", "<br>", note), x = 0, y = -0.16,
+      xref = "paper", yref = "paper", showarrow = FALSE,
+      xanchor = "left", align = "left", font = list(size = 10))))
+  plotly::config(p, displaylogo = FALSE)
+}
+
+# G2 : catégories + fonction commune
+perso_el <- perso_el %>%
+  mutate(
+    survie_cat = cut(rang_survie_pct, c(-Inf, .25, .5, .75, Inf), include.lowest = TRUE,
+                     labels = c("Éliminés\nen 1er", "Début\nde classement",
+                                "Fin de\nclassement", "Derniers\nen jeu")),
+    votes_cat  = cut(rang_votes_pct, c(-Inf, .25, .5, .75, Inf), include.lowest = TRUE,
+                     labels = c("Peu votés\n(25 % bas)", "Plutôt\npeu votés",
+                                "Plutôt\nvotés", "Très votés\n(25 % haut)"))
+  )
+taux_ref <- mean(perso_el$revenant)
+
+taux_graph <- function(df, var, titre, sous_titre = NULL, ordonner = FALSE) {
+  d <- df %>% filter(!is.na(.data[[var]])) %>%
+    group_by(modalite = .data[[var]]) %>%
+    summarise(n = n(), k = sum(revenant), .groups = "drop") %>%
+    mutate(taux = k / n,
+           lo = map2_dbl(k, n, ~ binom.test(.x, .y)$conf.int[1]),
+           hi = map2_dbl(k, n, ~ binom.test(.x, .y)$conf.int[2]),
+           modalite = if (ordonner) fct_reorder(as.character(modalite), taux, .desc = TRUE)
+           else modalite)
+  ggplot(d, aes(modalite, taux)) +
+    geom_col(fill = orange, width = .7) +
+    geom_errorbar(aes(ymin = lo, ymax = hi), width = .15, colour = "grey30") +
+    geom_hline(yintercept = taux_ref, linetype = "dashed", colour = "grey40") +
+    geom_text(aes(y = hi, label = paste0(round(100 * taux), " %\n(n=", n, ")")),
+              vjust = -0.3, size = 3.4) +
+    scale_y_continuous(labels = scales::percent, expand = expansion(mult = c(0, .3))) +
+    labs(title = titre, subtitle = sous_titre, x = NULL, y = "% de revenants")
+}
+
+```
+
+
 # Léna Legendre
 
-# Lucie Gobe
+# Statistiques descriptives
 
-# Lucie Gobe 2
+## Row {data-height="420"}
+
+### Nombre de participations par candidat
+
+```{r g03a}
+dist_part <- perso %>% count(n_participations)
+g03a <- ggplot(dist_part, aes(factor(n_participations), n)) +
+  geom_col(fill = "#2c7fb8") + geom_text(aes(label = n), vjust = -0.3) +
+  labs(x = "Nombre de participations", y = "Candidats",
+       title = "Combien de fois les candidats participent-ils ?")
+dyn(g03a, "top center")
+```
+
+### Statut atteint à la saison d'origine
+
+```{r gD03}
+d_statuts <- count(perso, statut_orig)
+gD03 <- ggplot(d_statuts, aes(fct_reorder(statut_orig, n), n)) +
+  geom_col(fill = "#41ab5d") +
+  geom_text(aes(label = n), hjust = -0.2) +
+  coord_flip() + expand_limits(y = max(d_statuts$n) * 1.1) +
+  labs(x = NULL, y = "Candidats", title = "Statut atteint à la saison d'origine")
+dyn(gD03, "middle right")
+```
+
+## Row {data-height="800"}
+
+### Composition des saisons : nouveaux vs anciens
+
+```{r gD05}
+comp <- saisons_kl %>%
+  mutate(nouveaux  = n_candidats - n_anciens,
+         etiquette = paste0(saison_slug, " (", annee, ")"),
+         etiquette = fct_reorder(etiquette, annee))
+
+lab_anciens <- comp %>%
+  filter(n_anciens > 0) %>%
+  mutate(txt = paste0(n_anciens, " anciens (", round(100 * n_anciens / n_candidats), " %)"))
+
+gD05 <- comp %>%
+  select(etiquette, Nouveaux = nouveaux, Anciens = n_anciens) %>%
+  pivot_longer(c(Nouveaux, Anciens), names_to = "type", values_to = "n") %>%
+  ggplot(aes(etiquette, n, fill = type)) +
+  geom_col() +
+  geom_text(data = lab_anciens, aes(etiquette, n_candidats, label = txt),
+            inherit.aes = FALSE, hjust = -0.08, size = 3) +
+  coord_flip() +
+  scale_y_continuous(expand = expansion(mult = c(0, .25))) +
+  scale_fill_manual(values = c(Nouveaux = "#2c7fb8", Anciens = "#e34a33")) +
+  labs(x = NULL, y = "Candidats", fill = NULL,
+       title = "Composition de chaque saison : nouveaux vs anciens",
+       subtitle = "% = part des revenants parmi les candidats de la saison")
+dyn(gD05, "middle right")
+```
+
+# Profil des revenants
+
+## Row {data-height="600"}
+
+### Taux de retour par saison d'origine
+
+```{r g03d}
+# On ne garde que les saisons ayant eu au moins une saison de retours ensuite
+# (perso_el) : pour les autres, "0 %" serait un artefact, pas une vraie mesure.
+cohorte <- perso_el %>%
+  group_by(saison_slug, annee_debut) %>%
+  summarise(n = n(), n_rev = sum(revenant), taux = n_rev / n, .groups = "drop") %>%
+  arrange(annee_debut, saison_slug) %>%
+  mutate(etiquette = paste0(saison_slug, " (", annee_debut, ")"),
+         etiquette = factor(etiquette, levels = etiquette),
+         texte = paste0(round(100 * taux), " %  (", n_rev, "/", n, ")"))
+
+exclues <- perso %>% distinct(saison_slug, annee_debut) %>%
+  filter(!saison_slug %in% cohorte$saison_slug) %>% arrange(annee_debut) %>%
+  mutate(e = paste0(saison_slug, " (", annee_debut, ")")) %>% pull(e)
+
+g03d <- ggplot(cohorte, aes(etiquette, taux)) +
+  geom_col(fill = "#2c7fb8") +
+  geom_text(aes(label = texte), hjust = -0.08, size = 3.2) +
+  scale_x_discrete(limits = rev(levels(cohorte$etiquette))) +   # plus ancienne en haut
+  scale_y_continuous(labels = scales::percent, expand = expansion(mult = c(0, .25))) +
+  coord_flip() +
+  labs(x = NULL, y = "% de revenants",
+       title = "Taux de retour par saison d'origine",
+       subtitle = "Saisons classées de la plus ancienne (haut) à la plus récente (bas) ; (revenants / candidats)")
+dyn(g03d, "middle right")
+```
+
+### Nombre de retours selon le statut à l'origine
+
+```{r g05d}
+SEUIL_LABEL <- 0.03   # on n'écrit pas le % dans les segments < 3 % (illisible)
+
+d05d <- perso_el %>%
+  count(statut_orig, n_retours) %>%
+  group_by(statut_orig) %>%
+  mutate(N = sum(n), pct = n / N) %>%
+  ungroup() %>%
+  arrange(statut_orig) %>%
+  mutate(statut_lab = fct_inorder(paste0(statut_orig, "\n(n = ", N, ")")),
+         n_retours  = factor(n_retours))
+
+g05d <- ggplot(d05d, aes(statut_lab, n, fill = n_retours)) +
+  geom_col(position = "fill") +
+  geom_text(data = filter(d05d, pct >= SEUIL_LABEL),
+            aes(label = scales::percent(pct, accuracy = 1)),
+            position = position_fill(vjust = .5), size = 3.2) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(x = "Statut à l'origine (effectif)", y = NULL, fill = "Nb de retours",
+       title = "Combien de fois reviennent les candidats, selon leur statut ?")
+dyn(g05d)
+```
+
+## Row {data-height="420"}
+
+### Revenants vs non-revenants
+
+```{r g05a}
+g05a <- perso_el %>%
+  select(revenant, jours_rel, log_votes, epreuves_gagnees, age) %>%
+  pivot_longer(-revenant, names_to = "variable", values_to = "valeur") %>%
+  filter(!is.na(valeur)) %>%
+  mutate(
+    variable = factor(variable,
+      levels = c("jours_rel", "log_votes", "epreuves_gagnees", "age"),
+      labels = c("Durée de survie\n(part de la saison tenue ; 1 = jusqu'au bout)",
+                 "Votes reçus contre soi\n(échelle log : log(1 + votes))",
+                 "Épreuves individuelles\ngagnées",
+                 "Âge à la 1re participation\n(ans)")),
+    revenant = factor(revenant, levels = c(FALSE, TRUE),
+                      labels = c("Non revenant", "Revenant"))
+  ) %>%
+  ggplot(aes(revenant, valeur, fill = revenant)) +
+  geom_boxplot(width = .5, outlier.alpha = .3) +
+  scale_fill_manual(values = c("Non revenant" = bleu, "Revenant" = orange)) +
+  facet_wrap(~ variable, scales = "free_y") +
+  labs(x = NULL, y = NULL, fill = NULL, title = "Revenants vs non-revenants") +
+  theme(legend.position = "right", legend.text = element_text(size = 11),
+        axis.text.x = element_blank(), axis.ticks.x = element_blank())
+dyn(g05a)
+```
+
+## Row {data-height="420"}
+
+### Taux de retour selon le statut
+
+```{r g2_statut}
+g2_statut <- taux_graph(perso_el, "statut_orig", "Le statut atteint à l'origine",
+                        paste0("Les meilleurs parcours sont-ils rappelés ? (tirets = taux moyen, ",
+                               round(100 * taux_ref), " %)"), ordonner = TRUE)
+dyn(g2_statut, "top center")
+```
+
+### Taux de retour selon la survie
+
+```{r g2_survie}
+g2_survie <- taux_graph(perso_el, "survie_cat", "La survie dans sa saison",
+                        "Position dans le classement d'élimination de sa saison")
+dyn(g2_survie, "top center")
+```
+
+### Taux de retour selon les votes reçus
+
+```{r g2_votes}
+g2_votes  <- taux_graph(perso_el, "votes_cat", "Les votes reçus",
+                        "Être clivant aide-t-il à revenir ?")
+dyn(g2_votes, "top center")
+```
+
 
 # Conclusion
