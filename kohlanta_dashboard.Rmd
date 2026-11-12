@@ -327,6 +327,12 @@ htmltools::tagList(
 )
 ```
 
+### Introduction
+
+Chaque point représente un participant et chaque lien indique que deux participants ont pris part à au moins une même saison. Le graphe donne ainsi une vue d’ensemble des recouvrements de casting entre les saisons.
+
+## Row {data-height="190"}
+
 ### Comment lire le graphe
 
 Recherchez un participant par son nom et choisissez une ou plusieurs saisons dans la liste (Cmd/Ctrl + clic). Les points hors saisons sélectionnées disparaissent; la recherche met en évidence les noms correspondants et affiche le nombre de résultats. « Tout afficher » réinitialise les filtres. Tous les liens de co-participation sont affichés. Survolez un point pour ses informations; sa taille augmente avec son nombre de participations. La couleur correspond à la première saison du participant. Utilisez la molette pour zoomer et faites glisser pour vous déplacer.
@@ -438,7 +444,7 @@ Un degré élevé signifie qu’un participant a partagé des saisons avec beauc
 
 Une intermédiarité élevée signale un participant qui se trouve souvent sur les plus courts chemins et relie ainsi différentes parties du réseau.
 
-## Row {data-height="590"}
+## Row {data-height="480"}
 
 ### Comparer les participants les plus connectés {data-width="65"}
 
@@ -455,48 +461,6 @@ knitr::kable(
 ### Interprétation — centralités {data-width="35"}
 
 Le tableau compare plusieurs façons d’être central. Un participant peut avoir beaucoup de liens directs sans être celui qui relie le plus de groupes. La proximité mesure la distance aux autres; l’intermédiarité repère les passages fréquents par les plus courts chemins; le vecteur propre valorise les liens avec d’autres participants centraux.
-
-## Row {data-height="500"}
-
-### Les participants les plus proches {data-width="60"}
-
-```{r}
-knitr::kable(top_proximite[, c("Participant", "Proximite")], digits = 3,
-             col.names = c("Participant", "Proximité"),
-             caption = "Top 10 de la centralité de proximité")
-```
-
-### Interprétation — proximité {data-width="40"}
-
-Une proximité élevée indique des distances courtes vers les autres participants accessibles dans le réseau.
-
-## Row {data-height="500"}
-
-### Clustering autour des participants {data-width="60"}
-
-```{r}
-knitr::kable(top_transitivite[, c("Participant", "Transitivite_locale")], digits = 3,
-             col.names = c("Participant", "Transitivité locale"),
-             caption = "Top 10 de la transitivité locale")
-```
-
-### Interprétation — transitivité locale {data-width="40"}
-
-La transitivité locale indique si les co-participants d’une personne ont souvent eux-mêmes partagé une saison. Une valeur élevée décrit un voisinage où ils sont souvent eux-mêmes reliés, signe d’un groupe resserré.
-
-## Row {data-height="500"}
-
-### Participants liés à d’autres participants centraux {data-width="60"}
-
-```{r}
-knitr::kable(top_vecteur_propre[, c("Participant", "Vecteur_propre")], digits = 3,
-             col.names = c("Participant", "Vecteur propre"),
-             caption = "Top 10 de la centralité de vecteur propre")
-```
-
-### Interprétation — vecteur propre {data-width="40"}
-
-Un score élevé indique des participants connectés à d’autres participants eux-mêmes bien connectés.
 
 ```{r prep-retours, include=FALSE}
 # ---- Données et préparation (identique à analyses_lucie_graphiques.R) ----
