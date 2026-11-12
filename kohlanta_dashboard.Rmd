@@ -501,7 +501,7 @@ Un score élevé indique des participants connectés à d’autres participants 
 ```{r prep-retours, include=FALSE}
 # ---- Données et préparation (identique à analyses_lucie_graphiques.R) ----
 suppressPackageStartupMessages(library(tidyverse))
-SEUIL_RETOURS <- 5   # une saison compte comme "saison de retours" si >= 5 anciens
+SEUIL_RETOURS <- 1   # une saison compte comme "saison de retours" s'il y a eu au moins 1 ancien candidat
 FICHIER <- c(file.path(dossier, "Data", "df_kohlanta.csv"),
              file.path(dossier, "df_kohlanta.csv"))
 FICHIER <- FICHIER[file.exists(FICHIER)][1]
@@ -687,7 +687,6 @@ taux_graph <- function(df, var, titre, sous_titre = NULL, ordonner = FALSE) {
 
 ```
 
-
 # Léna Legendre
 
 # Statistiques descriptives
@@ -717,9 +716,19 @@ gD03 <- ggplot(d_statuts, aes(fct_reorder(statut_orig, n), n)) +
 dyn(gD03, "middle right")
 ```
 
+## Row {data-height="140"}
+
+### Interprétation — Nombre participations
+
+La très grande majorité des candidats ne participe qu’une seule fois : 444 sur 527 (84 %). Seuls 83 candidats (16 %) reviennent au moins une fois, dont 64 une seule fois ; au-delà, les retours deviennent exceptionnels (10 candidats avec 3 participations, 7 avec 4, puis un seul avec 5 et un seul avec 6). Revenir est donc rare, ce qui justifie la question centrale du projet : quels profils sont rappelés, et pourquoi eux plutôt que d’autres ?
+
+### Interprétation — Statut
+
+Neuf candidats sur dix (474 sur 527, soit 90 %) ont été éliminés au cours de leur première saison. 30 sont vainqueurs (6 %) et 22 finalistes (4 %). Un seul candidat a abandonné. Les statuts manquants (NA) ont été recodés en « Éliminé » : c’est un choix de notre part, qui semble cohérent pour le nombre de vainqueurs. Les finalistes et vainqueurs sont très minoritaires : nous regarderons plus loin si leur parcours augmente leurs chances d’être rappelés.
+
 ## Row {data-height="800"}
 
-### Composition des saisons : nouveaux vs anciens
+### Composition des saisons : nouveaux vs anciens {data-width="80"}
 
 ```{r gD05}
 comp <- saisons_kl %>%
@@ -738,20 +747,30 @@ gD05 <- comp %>%
   geom_col() +
   geom_text(data = lab_anciens, aes(etiquette, n_candidats, label = txt),
             inherit.aes = FALSE, hjust = -0.08, size = 3) +
+  scale_x_discrete(limits = rev(levels(comp$etiquette))) +   # plus ancienne en haut
   coord_flip() +
   scale_y_continuous(expand = expansion(mult = c(0, .25))) +
   scale_fill_manual(values = c(Nouveaux = "#2c7fb8", Anciens = "#e34a33")) +
   labs(x = NULL, y = "Candidats", fill = NULL,
-       title = "Composition de chaque saison : nouveaux vs anciens",
-       subtitle = "% = part des revenants parmi les candidats de la saison")
+       title = "Composition de chaque saison : nouveaux vs anciens")
 dyn(gD05, "middle right")
 ```
+
+### Interprétation — Saisons avec revenants {data-width="20"}
+
+Sur 34 saisons, 25 ne comptent que de nouveaux candidats. Neuf accueillent des anciens, de deux types :
+
+-   6 saisons « all-stars », entièrement composées d’anciens (100 %), dont 2026 All-Stars, 2021 La Légende et 2018 Le Combat des héros
+
+-   3 saisons mixtes, où anciens et nouveaux se mélangent : Le Choc des héros (2010, 50 % d’anciens), L’Île des héros (2020, 25 %) et La Tribu maudite (2024, 8 %).
+
+Nous considérons comme « saisons de retours » toutes les saisons qui comptent au moins un ancien candidat, soit ces 9 saisons. Ce sont les seules où un candidat peut revenir : elles définissent les occasions de retour sur lesquelles repose la suite de l’analyse.
 
 # Profil des revenants
 
 ## Row {data-height="600"}
 
-### Taux de retour par saison d'origine
+### Taux de retour par saison d'origine {data-width=50}
 
 ```{r g03d}
 # On ne garde que les saisons ayant eu au moins une saison de retours ensuite
@@ -780,7 +799,7 @@ g03d <- ggplot(cohorte, aes(etiquette, taux)) +
 dyn(g03d, "middle right")
 ```
 
-### Nombre de retours selon le statut à l'origine
+### Nombre de retours selon le statut à l'origine {data-width=50}
 
 ```{r g05d}
 SEUIL_LABEL <- 0.03   # on n'écrit pas le % dans les segments < 3 % (illisible)
@@ -806,9 +825,19 @@ g05d <- ggplot(d05d, aes(statut_lab, n, fill = n_retours)) +
 dyn(g05d)
 ```
 
-## Row {data-height="420"}
+## Row {data-height="170"}
 
-### Revenants vs non-revenants
+### Interprétation — taux de retour par saison {data-width=50}
+
+Le taux de retour va de 0 % à 33 % selon la saison d'origine. Les saisons du début (2001 à 2012) sont les plus « productrices » de revenants : *Palau* (2009) atteint 33 % (6 candidats sur 18), *Raja Ampat* (2011) et *Malaisie* (2012) 30 %. À partir de 2015, les taux sont le plus souvent compris entre 5 % et 15 %, et trois saisons n'ont fourni aucun revenant : *Le Choc des héros* (2010, 0 sur 7), *Le Totem maudit* (2022) et *Les Chasseurs d'immunité* (2024). Ces écarts s'expliquent en partie par le temps écoulé : un candidat de 2002 a eu bien plus d'occasions d'être rappelé qu'un candidat de 2024, donc les saisons récentes sont à lire avec prudence.
+
+### Interprétation — retours selon le statut {data-width=50}
+
+Le statut atteint à l'origine change nettement le nombre de retours : 88 % des éliminés ne reviennent jamais, contre 59 % des vainqueurs et 29 % des finalistes seulement. Les retours multiples (3 ou plus) se concentrent chez les vainqueurs (10 %) et les finalistes (15 %), alors qu'ils sont très rares chez les éliminés. Attention aux effectifs : avec 21 finalistes et 29 vainqueurs, un seul candidat pèse 3 à 5 points de pourcentage. L'unique abandon n'est pas interprétable.
+
+## Row {data-height="520"}
+
+### Revenants vs non-revenants {data-width=60}
 
 ```{r g05a}
 g05a <- perso_el %>%
@@ -835,13 +864,25 @@ g05a <- perso_el %>%
 dyn(g05a)
 ```
 
+### Interprétation — revenants vs non-revenants {data-width=40}
+
+Les revenants se distinguent surtout par leur parcours dans leur saison d'origine, beaucoup moins par leur profil personnel.
+
+- **Survie** : la médiane des revenants est proche de 1 (ils vont presque jusqu'au bout de leur saison), contre environ 0,55 pour les non-revenants, dont la moitié est éliminée avant d'avoir tenu 55 % de la saison. C'est donc un facteur interessant par rapport à notre problématique.  
+
+- **Épreuves gagnées** : la médiane est de 2 pour les revenants contre 0 pour les non-revenants. C'est l'une des différences les plus nettes, le nombre d'épreuve gagnées est un facteur qui explique pourquoi un candidat est rappelé plus qu'un autre.
+
+- **Votes reçus** : le nombre de votes est très inégal selon les candidats, donc sur une échelle normale quelques valeurs très élevées écraseraient tout le graphique. Nous avons utilisé une échelle logarithmique, qui rapproche les grandes valeurs pour rendre les écarts lisibles. On ajoute 1 aux votes avant le calcul (log(1 + votes)) car le logarithme n'existe pas pour 0. Les revenants reçoivent plus de votes.  Cependant, plus on reste longtemps, plus on a d'occasions d'être voté, ce qui peut suffire à expliquer l'écart. 
+
+- **Âge** : les deux distributions sont presque identiques (médiane autour de 32-33 ans). L'âge ne semble pas jouer sur les profils rappelés pour une autre saison.
+
 ## Row {data-height="420"}
 
 ### Taux de retour selon le statut
 
 ```{r g2_statut}
 g2_statut <- taux_graph(perso_el, "statut_orig", "Le statut atteint à l'origine",
-                        paste0("Les meilleurs parcours sont-ils rappelés ? (tirets = taux moyen, ",
+                        paste0("Les meilleurs parcours sont-ils rappelés ?",
                                round(100 * taux_ref), " %)"), ordonner = TRUE)
 dyn(g2_statut, "top center")
 ```
@@ -862,5 +903,18 @@ g2_votes  <- taux_graph(perso_el, "votes_cat", "Les votes reçus",
 dyn(g2_votes, "top center")
 ```
 
+## Row {data-height="200"}
+
+### Interprétation — statut
+
+Les finalistes sont de loin les plus rappelés : 71 % reviennent (n = 21), contre 41 % des vainqueurs et 12 % des éliminés, pour un taux moyen d'environ 16 %. Les finalistes reviennent donc plus souvent que les vainqueurs, ce qui est un point interessant. Les IC 95 % sont larges sur les petits effectifs : l'écart entre finalistes et vainqueurs n'est pas assuré, alors que celui avec les éliminés l'est.
+
+### Interprétation — survie
+
+Plus un candidat va loin dans sa saison, plus il a de chances de revenir : 4 % pour le premier quart des éliminés, 10 %, 17 %, puis 34 % pour le dernier quart (ceux qui restent le plus longtemps en jeu), soit plus du double de la moyenne. Seul ce dernier groupe dépasse nettement la moyenne : le retour récompense surtout les parcours longs.
+
+### Interprétation — votes reçus
+
+Les candidats les plus votés reviennent à 48 %, contre 7 à 11 % pour les trois autres groupes : l'écart est concentré sur les profils les plus clivants plutôt que progressif. Les groupes sont de tailles inégales (89 à 218 candidats), probablement à cause des nombreux candidats à égalité avec peu ou pas de votes. Ce résultat est lié à la survie (il faut rester longtemps pour être beaucoup voté) : on ne peut pas y voir un effet « clivant » isolé.
 
 # Conclusion
