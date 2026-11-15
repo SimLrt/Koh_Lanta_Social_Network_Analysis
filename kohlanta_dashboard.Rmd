@@ -651,8 +651,6 @@ taux_graph <- function(df, var, titre, sous_titre = NULL, ordonner = FALSE) {
 
 ```
 
-# Léna Legendre
-
 # Statistiques descriptives
 
 ## Row {data-height="420"}
@@ -880,5 +878,211 @@ Plus un candidat va loin dans sa saison, plus il a de chances de revenir : 4 % p
 ### Interprétation — votes reçus
 
 Les candidats les plus votés reviennent à 48 %, contre 7 à 11 % pour les trois autres groupes : l'écart est concentré sur les profils les plus clivants plutôt que progressif. Les groupes sont de tailles inégales (89 à 218 candidats), probablement à cause des nombreux candidats à égalité avec peu ou pas de votes. Ce résultat est lié à la survie (il faut rester longtemps pour être beaucoup voté) : on ne peut pas y voir un effet « clivant » isolé.
+
+# Popularité et retour
+
+```{r}
+#install.packages(c("ggplot2", "dplyr"))
+library(ggplot2)
+library(dplyr)
+
+df <- read.csv("Data/df_kohlanta.csv", stringsAsFactors = FALSE, encoding = "UTF-8")
+
+d <- df %>% filter(!is.na(recherche_google)) # On garde les lignes où l'indice est connu
+
+# Convertions des variables annee, statut et equipe en facteurs
+d$annee  <- as.factor(d$annee)
+d$statut <- as.factor(d$statut)
+d$equipe <- as.factor(d$equipe)
+```
+
+## Row {data-height=90}
+
+### Résumé de l'indice de recherche Google
+```{r}
+val_min <- min(d$recherche_google)
+val_max <- max(d$recherche_google)
+
+resume <- data.frame(
+  "Minimum"              = val_min,
+  "Maximum"              = val_max,
+  "Moyenne"              = round(mean(d$recherche_google), 2),
+  "Médiane"              = round(median(d$recherche_google), 2),
+  "1er quartile (25 %)"  = round(quantile(d$recherche_google, 0.25), 2),
+  "3e quartile (75 %)"   = round(quantile(d$recherche_google, 0.75), 2),
+  "Écart-type"           = round(sd(d$recherche_google), 2),
+  "Indices = 0"          = sum(d$recherche_google == 0),
+  check.names = FALSE
+)
+
+knitr::kable(resume, align = "c", digits = 2, row.names = FALSE)
+```
+
+## Row {data-height=430}
+
+### Interpretation - Définition de l'indice de recherche Google 
+
+**Que mesure l'indice ?**
+Pour chaque candidat, nous avons récupéré sur Google Trends (par scraping) les recherches « Prénom koh lanta » en France, semaine par semaine, sur l'année de sa participation. Google ramène la semaine la plus forte à 100, et les autres en proportion. Notre indice `recherche_google` est la moyenne de ces semaines sur l'année.
+
+- Indice bas : intérêt concentré sur une ou deux semaines.
+- Indice élevé : intérêt étalé sur l'année.
+
+**Lecture du tableau**
+
+- Moyenne 6,08 et médiane 5,38 : l'indice est faible en général, car même un pic à 100 donne une moyenne basse s'il est ponctuel. La moyenne, un peu au-dessus de la médiane, est tirée par quelques candidats à l'intérêt plus étalé.
+- Quartiles 2,69 et 8,94 : un quart des candidats est sous 2,69, un quart au-dessus de 8,94.
+- Écart-type 4,54 : proche de la moyenne, donc les indices sont très dispersés.
+- Maximum 21,93 : ce sont les deux Lola (voir ci-dessous), donc une valeur à prendre avec précaution.
+- Minimum 0 (85 cas) : Google renvoie 0 quand il y a trop peu de recherches. Ce sont surtout des candidats éliminés tôt et des saisons anciennes.
+
+**Limites**
+
+- Pas un volume : chaque candidat est sur sa propre échelle. On compare la durée de l'intérêt des candidats, pas des nombres de recherches.
+- Pas de données avant 2004 : Google Trends n'existe pas avant. Les candidats des saisons 2001 à 2003 (50 participations) n'ont donc pas d'indice.
+- Indices tronqués pour les homonyme : la requête ne porte que sur le prénom. En 2026, il y a eu deux saisons, avec deux Lola (lola-2026 en première participation, lola-2020 en deuxième). Les deux ont donc le même indice sur leur participation de 2026 (le maximum à 21,93), qui mélange leurs recherches.
+
+## Row {data-height=500}
+
+### Indice de recherche Google selon l'année de participation
+```{r}
+#install.packages("ggrepel")
+library(ggrepel)
+
+d_out <- d %>%
+  group_by(annee) %>%
+  mutate(est_outlier = recherche_google %in% boxplot.stats(recherche_google)$out) %>%
+  ungroup()
+
+ggplot(d_out, aes(x = annee, y = recherche_google)) +
+  geom_boxplot(fill = "orange", alpha = 0.7, outlier.color = "black") +
+  geom_text_repel(data = filter(d_out, est_outlier),
+                  aes(label = slug),
+                  size = 3, color = "black",
+                  nudge_x = 0.35,          # pousse les étiquettes à droite du point
+                  direction = "y",         # elles ne se déplacent que verticalement
+                  hjust = 0,
+                  segment.color = "grey60",
+                  box.padding = 0.25,
+                  max.overlaps = Inf) +    # affiche toutes les étiquettes, même si dense
+  scale_x_discrete(expand = expansion(add = c(0.6, 1.5))) +
+  labs(x = "Année de participation", y = "Indice moyen annuel des participants") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Indice Google de la 1re participation selon le nombre de participations
+```{r}
+av <- read.csv(
+  "Data/kohlanta_stats_aventuriers.csv",
+  sep = ";",
+  dec = ".",
+  fileEncoding = "UTF-8",
+  stringsAsFactors = FALSE
+)
+av$nb_participations <- lengths(strsplit(av$Saisons, "\\s*\\|\\s*"))
+
+premiere <- df %>%
+  filter(!is.na(recherche_google)) %>%
+  group_by(slug) %>%
+  arrange(annee) %>%
+  summarise(recherche_google = first(recherche_google), .groups = "drop")
+
+av2 <- inner_join(av, premiere, by = c("Id" = "slug"))
+
+av2 <- av2 %>%
+  group_by(nb_participations) %>%
+  mutate(n_groupe = n(),
+         est_outlier = recherche_google %in% boxplot.stats(recherche_google)$out) %>%
+  ungroup() %>%
+  mutate(etiquette_axe = paste0(nb_participations, "\n(n = ", n_groupe, ")"),
+         etiquette_axe = factor(etiquette_axe,
+                                levels = unique(etiquette_axe[order(nb_participations)])))
+
+ggplot(av2, aes(x = etiquette_axe, y = recherche_google)) +
+  geom_boxplot(fill = "salmon", outlier.color = "black") +
+  labs(x = "Nombre de participations", y = "Indice moyen annuel des participants")
+```
+
+## Row {data-height=260}
+
+### Interpretation - Indice de recherche Google selon l'année de participation
+
+À partir de 2007, la médiane de l'indice augmente progressivement, avec un premier pic en 2014 (médiane d'environ 8,6). Un deuxième pic apparaît en 2020 et 2021 (médiane de l'indice à environ 9 à 10, pendant le Covid). L'indice retombe ensuite jusqu'en 2025 (environ 3,4), puis remonte fortement en 2026 (environ 9).
+
+Les années de pic (2014, 2020, 2021, 2026) ont chacune une saison où reviennent des candidats déjà connus du public. On suppose donc que les candidats "revenants" ont tendance à être recherchés plus longtemps dans l'année.Egalement les saisons 2020 et 2021 ont été diffusées pendant le Covid, une période où les Français étaient plus souvent chez eux et devant la télévision, ce qui a pu étaler l'intérêt dans le temps.
+
+Enfin, sur chaque boxplot, on remarque beaucoup de valeurs aberrantes vers le haut. Ces points sont surtout des candidats restés longtemps dans l'aventure ou des revenants (ex: moussa-2003, moundir-2003). L'intérêt du public se concentre donc sur un petit nombre de candidats, alors que la plupart restent peu recherchés.
+
+### Interpretation - Indice Google de la 1re participation selon le nombre de participations
+On remarque que les candidats qui ont participé 2 ou 3 fois ont un indice légèrement plus haut (médiane d'environ 6) que ceux qui n'ont participé qu'une fois (environ 4,7). On suppose donc qu'un candidat recherché plus longtemps dans l'année a plus de chances d'être rappelé pour une autre saison, ce qui peut être l'un des facteurs. Cette différence reste faible et les groupes à 3 participations ou plus sont très petits, donc il faut rester prudent.
+
+## Row {data-height=500}
+
+### Top 15 des participations par leur indice de recherche Google
+```{r}
+top15 <- av2 %>%
+  arrange(desc(recherche_google)) %>%
+  head(15) %>%
+  mutate(label = Id,   
+         texte_barre = paste0(nb_participations,
+                              ifelse(nb_participations > 1, " participations", " participation")))
+
+ggplot(top15, aes(x = reorder(label, recherche_google), y = recherche_google)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = texte_barre), hjust = -0.1, size = 3.5) +
+  coord_flip() +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.45))) +
+  labs(x = "", y = "Indice moyen annuel (1re participation)")
+```
+
+### Profils d'intérêt (1ère participation) : revenants vs non-revenants
+```{r}
+library(scales)   # pour afficher les pourcentages (déjà installé avec ggplot2)
+
+# Seuils des quartiles sur l'indice de la 1re participation
+q <- quantile(av2$recherche_google, probs = c(0.25, 0.75))
+
+av3 <- av2 %>%
+  mutate(
+    profil = case_when(
+      recherche_google <= q[1] ~ "Intérêt court dans le temps (25 % les plus bas)",
+      recherche_google >= q[2] ~ "Intérêt soutenu (25 % les plus hauts)",
+      TRUE                     ~ "Intermédiaire"
+    ),
+    profil = factor(profil, levels = c("Intérêt court dans le temps (25 % les plus bas)",
+                                       "Intermédiaire",
+                                       "Intérêt soutenu (25 % les plus hauts)")),
+    groupe = ifelse(nb_participations > 1, "Revenants", "Non-revenants")
+  )
+
+# Effectifs et pourcentages dans chaque groupe
+resume_profils <- av3 %>%
+  count(groupe, profil) %>%
+  group_by(groupe) %>%
+  mutate(n_groupe = sum(n),
+         pct = n / n_groupe,
+         etiquette_axe = paste0(groupe, "\n(n = ", n_groupe, ")")) %>%
+  ungroup()
+
+ggplot(resume_profils, aes(x = etiquette_axe, y = pct, fill = profil)) +
+  geom_col() +
+  geom_text(aes(label = percent(pct, accuracy = 1)),
+            position = position_stack(vjust = 0.5), size = 4) +
+  scale_y_continuous(labels = percent) +
+  labs(x = "", y = "Proportion", fill = "Profil")
+```
+
+## Row {data-height=240}
+
+### Interpretation - Top 15 des participations par leur indice de recherche Google
+On remarque que parmi les 15 candidats dont l'intérêt a été le plus étalé lors de leur première participation, 5 sont revenus (julie-2016, jacques-2024, karima-2016, lola-2020 et nathalie-2008), soit un tiers. Les indices vont d'environ 15 à 22, et les saisons 2016, 2017, 2020, 2021 et 2026 reviennent souvent.
+
+On suppose donc que la popularité auprès du public, mesurée par les recherches Google, contribue aussi au retour d'un candidat, en complément de ses performances dans le jeu.
+Rappel: L'indice de lola-2026 est tronqué (il mélange ses recherches et les recherches de lola-2020 sur sa 2ème participation en 2026).
+
+### Interpretation - Profils d'intérêt (1ère participation) : revenants vs non-revenants
+Dans ce graphique en barres, les candidats sont classés selon l'indice de leur première participation, en trois groupes : les 25 % ayant l'indice le plus bas (« intérêt court dans le temps »), les 25 % ayant l'indice le plus haut (« intérêt soutenu »), et les 50 % restants au milieu (« intermédiaire »). Ces seuils sont les mêmes pour tout le monde. On regarde ensuite comment ces trois profils se répartissent chez les non-revenants (une seule participation) et chez les revenants (deux participations ou plus).
+
+On remarque que les revenants ont moins souvent un intérêt court dans le temps (19 %) que les non-revenants (29 %), et un peu plus souvent un intérêt intermédiaire (53 % contre 46 %) ou soutenu (28 % contre 25 %). On suppose donc que les candidats peu recherchés pendant leur première participation ont moins de chances d'être rappelés, ce qui va dans le sens d'une contribution de la popularité auprès du public au retour d'un candidat.
 
 # Conclusion
