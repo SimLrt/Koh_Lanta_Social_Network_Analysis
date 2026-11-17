@@ -1,16 +1,51 @@
 ---
-title: "Réseau de co-participation — Koh-Lanta"
+title: "Analyse de Réseaux — Koh-Lanta"
 output:
   flexdashboard::flex_dashboard:
     orientation: rows
-    vertical_layout: fill
+    vertical_layout: scroll
     theme: flatly
 ---
+
+```{=html}
+<style>
+.navbar, .navbar-default, .navbar-inverse {
+  background-color: #236B4E !important;
+  border-color: #236B4E !important;
+}
+.navbar-brand, .navbar-nav > li > a { color: #F7F2E8 !important; }
+.navbar-nav > li > a:hover, .navbar-nav > .active > a,
+.navbar-nav > .active > a:hover {
+  color: #FFFFFF !important;
+  background-color: #184B37 !important;
+}
+</style>
+```
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
-# Fixe le dossier de travail sur celui du Rmd, quel que soit le dossier de RStudio.
+# Charte Koh-Lanta : jungle, feu et sable.
+couleurs_kl <- list(
+  jungle = "#236B4E", feuille = "#75A65B", ocre = "#D69A32",
+  braise = "#B94A3A", sable = "#E8D7B5", ardoise = "#46534A",
+  repere = "#AAB2BD"
+)
+couleurs_categories <- unlist(couleurs_kl[c("jungle", "feuille", "ocre", "braise")])
+ggplot2::theme_set(
+  ggplot2::theme_minimal(base_size = 12) +
+    ggplot2::theme(
+      plot.title.position = "plot",
+      plot.title = ggplot2::element_text(face = "bold", colour = couleurs_kl$ardoise),
+      plot.subtitle = ggplot2::element_text(colour = couleurs_kl$ardoise),
+      axis.text = ggplot2::element_text(colour = couleurs_kl$ardoise),
+      panel.grid.minor = ggplot2::element_blank(),
+      panel.grid.major = ggplot2::element_line(colour = "#E4E8E1"),
+      panel.background = ggplot2::element_rect(fill = "white", colour = NA),
+      plot.background = ggplot2::element_rect(fill = "white", colour = NA)
+    )
+)
+
 dossier <- dirname(normalizePath(knitr::current_input()))
 knitr::opts_knit$set(root.dir = dossier)
 
@@ -21,9 +56,7 @@ fichiers_csv <- c(
   file.path(dossier, "Data", "kohlanta_stats_aventuriers.csv")
 )
 fichier_csv <- fichiers_csv[file.exists(fichiers_csv)][1]
-if (is.na(fichier_csv)) {
-  stop("CSV introuvable. Placez kohlanta_stats_aventuriers.csv dans le dossier Data/ ou a la racine du projet.")
-}
+
 dossier_exports <- file.path(dossier, "exports")
 dir.create(dossier_exports, showWarnings = FALSE)
 
@@ -90,8 +123,48 @@ write.csv(
 )
 ```
 
-Row {data-height=140}
--------------------------------------
+```{r analyses-reseau, include=FALSE}
+# Meme approche que dans GoT.Rmd : graphe non dirige et indicateurs igraph.
+reseau_non_dirige <- igraph::as.undirected(reseau, mode = "collapse")
+reseau_degre <- igraph::degree(reseau_non_dirige, mode = "total")
+closeness <- igraph::closeness(reseau_non_dirige, mode = "all")
+betweenness <- igraph::betweenness(reseau_non_dirige, directed = FALSE)
+eigen_centrality <- igraph::eigen_centrality(reseau_non_dirige, directed = FALSE)
+
+distances_reseau <- igraph::distances(reseau_non_dirige)
+distances_reseau <- as.vector(distances_reseau)
+distances_reseau <- distances_reseau[is.finite(distances_reseau) & distances_reseau > 0]
+diametre_reseau <- igraph::diameter(reseau_non_dirige, directed = FALSE)
+transitivite_globale <- igraph::transitivity(reseau_non_dirige, type = "global")
+transitivite_locale <- igraph::transitivity(reseau_non_dirige, type = "local")
+
+tableau_centralites <- data.frame(
+  Participant = infos_participants$Nom,
+  Degre = as.numeric(reseau_degre),
+  Proximite = as.numeric(closeness),
+  Intermediarite = as.numeric(betweenness),
+  Vecteur_propre = as.numeric(eigen_centrality$vector),
+  Transitivite_locale = as.numeric(transitivite_locale),
+  check.names = FALSE
+)
+
+top_degre <- tableau_centralites[order(-tableau_centralites$Degre), ][1:10, ]
+top_intermediarite <- tableau_centralites[order(-tableau_centralites$Intermediarite), ][1:10, ]
+top_proximite <- tableau_centralites[order(-tableau_centralites$Proximite), ][1:10, ]
+top_vecteur_propre <- tableau_centralites[order(-tableau_centralites$Vecteur_propre), ][1:10, ]
+top_transitivite <- tableau_centralites[order(-tableau_centralites$Transitivite_locale), ][1:10, ]
+
+deg_moy <- mean(reseau_degre)
+deg_med <- median(reseau_degre)
+lignes_moy_med_plot <- data.frame(
+  Indicateur = c("Degré moyen", "Degré médian"),
+  valeur = c(deg_moy, deg_med)
+)
+```
+
+# Graphe
+
+## Row {data-height="140"}
 
 ### Participants
 
@@ -111,86 +184,62 @@ flexdashboard::valueBox(length(unique(unlist(saisons))), caption = "Saisons", ic
 flexdashboard::valueBox(ecount(reseau), caption = "Liens de co-participation", icon = "fa-link")
 ```
 
-Row {data-height=700}
--------------------------------------
+## Row {data-height="750"}
 
-### Graphe interactif du réseau
+### Graphe interactif du réseau {data-width="60"}
 
 ```{r graphe, fig.width=12, fig.height=6}
-# Plus d'iterations et des liens non ponderes evitent de trop resserrer les noeuds.
+# Positionne les participants sans utiliser le poids des liens.
 set.seed(1)
-positions <- layout_with_fr(
-  reseau,
-  weights = rep(1, ecount(reseau)),
-  niter = 1500,
-  start.temp = 2 * sqrt(vcount(reseau))
-)
-colnames(positions) <- c("x", "y")
+positions <- layout_with_fr(reseau, weights = NA, niter = 1500,
+                            start.temp = 2 * sqrt(vcount(reseau)))
 
-# Tous les liens sont traces dans une seule couche pour garder un rendu rapide.
-extremites <- ends(reseau, E(reseau), names = TRUE)
-x1 <- positions[match(extremites[, 1], V(reseau)$name), "x"]
-y1 <- positions[match(extremites[, 1], V(reseau)$name), "y"]
-x2 <- positions[match(extremites[, 2], V(reseau)$name), "x"]
-y2 <- positions[match(extremites[, 2], V(reseau)$name), "y"]
-x_liens <- as.vector(rbind(x1, x2, NA))
-y_liens <- as.vector(rbind(y1, y2, NA))
-id_debut <- as.vector(rbind(extremites[, 1], extremites[, 1], NA_character_))
-id_fin <- as.vector(rbind(extremites[, 2], extremites[, 2], NA_character_))
-ids_aretes <- lapply(seq_along(id_debut), function(i) {
-  if (is.na(id_debut[i])) NULL else c(id_debut[i], id_fin[i])
-})
+# Coordonnees des liens, separes par NA pour les tracer en une seule couche.
+liens <- ends(reseau, E(reseau), names = FALSE)
+indices_liens <- as.vector(rbind(liens[, 1], liens[, 2], NA_integer_))
+xy_liens <- positions[indices_liens, , drop = FALSE]
+x_liens <- xy_liens[, 1]
+y_liens <- xy_liens[, 2]
 
-nb_participations <- infos_participants$participations
-taille_points <- 6 + 5 * nb_participations
-
-# Une couleur par saison : les teintes sont espacees, la luminosite augmente
-# avec l'annee. Un participant multi-saisons prend la couleur de sa derniere saison.
+# Chaque participant prend la couleur de sa premiere saison.
 noms_saisons <- unique(trimws(unlist(strsplit(donnees$Saisons, "|", fixed = TRUE))))
 annees <- as.integer(regmatches(noms_saisons, regexpr("(19|20)[0-9]{2}", noms_saisons)))
-ordre_saisons <- order(annees, noms_saisons)
-noms_saisons <- noms_saisons[ordre_saisons]
-annees <- annees[ordre_saisons]
-names(annees) <- noms_saisons
-saison_plus_recente <- vapply(saisons, function(x) x[which.max(annees[x])], character(1))
-saison_plus_recente <- saison_plus_recente[match(V(reseau)$name, id)]
-luminosite_saisons <- 38 + 40 * (annees - min(annees)) / (max(annees) - min(annees))
-teintes_saisons <- ((seq_along(noms_saisons) - 1) * 137.508) %% 360
-palette_saisons <- grDevices::hcl(h = teintes_saisons, c = 85, l = luminosite_saisons)
+ordre <- order(annees, noms_saisons)
+noms_saisons <- noms_saisons[ordre]
+annees <- annees[ordre]
+luminosite <- 38 + 40 * (annees - min(annees)) / diff(range(annees))
+palette_saisons <- grDevices::hcl(
+  h = ((seq_along(noms_saisons) - 1) * 137.508) %% 360,
+  c = 85, l = luminosite
+)
+saison_premiere <- vapply(saisons, function(x) x[which.min(match(x, noms_saisons))], character(1))
+saison_premiere <- saison_premiere[match(V(reseau)$name, id)]
 
 survol <- paste0(
   "<b>", infos_participants$Nom, "</b>",
-  "<br>Participations : ", nb_participations,
+  "<br>Participations : ", infos_participants$participations,
   "<br>Indice : ", infos_participants$Indice,
-  "<br>Jours de survie : ", infos_participants$Jours_survie,
-  "<br>Victoires : ", infos_participants$Victoires,
+  "<br>Jours de survie au total : ", infos_participants$Jours_survie,
+  "<br>Victoires sur les épreuves : ", infos_participants$Victoires,
   "<br>Saisons : ", infos_participants$Saisons
 )
 
 graphe <- plotly::plot_ly(height = 560, width = "100%") |>
   plotly::add_trace(
-    x = x_liens, y = y_liens,
-    type = "scatter", mode = "lines",
+    x = x_liens, y = y_liens, type = "scatter", mode = "lines",
     line = list(color = "rgba(145,155,170,0.35)", width = 1),
-    customdata = ids_aretes,
     hoverinfo = "none", showlegend = FALSE
-  )
-
-couleurs_participants <- palette_saisons[match(saison_plus_recente, noms_saisons)]
-graphe <- graphe |>
+  ) |>
   plotly::add_trace(
-    x = positions[, "x"], y = positions[, "y"],
-    type = "scatter", mode = "markers",
-    text = survol, hoverinfo = "text",
-    ids = V(reseau)$name,
+    x = positions[, 1], y = positions[, 2], type = "scatter", mode = "markers",
+    text = survol, hoverinfo = "text", ids = V(reseau)$name,
     marker = list(
-      size = taille_points, color = couleurs_participants,
+      size = 6 + 5 * infos_participants$participations,
+      color = palette_saisons[match(saison_premiere, noms_saisons)],
       opacity = 0.88, line = list(width = 0.6, color = "white")
     ),
     showlegend = FALSE
-  )
-
-graphe |>
+  ) |>
   plotly::layout(
     dragmode = "zoom", hovermode = "closest",
     xaxis = list(visible = FALSE, fixedrange = FALSE),
@@ -198,7 +247,7 @@ graphe |>
     showlegend = FALSE,
     margin = list(l = 0, r = 0, t = 10, b = 0)
   ) |>
-  plotly::config(scrollZoom = TRUE, displaylogo = FALSE) -> graphe
+  plotly::config(scrollZoom = TRUE, displaylogo = FALSE)
 
 options_saisons <- lapply(noms_saisons, function(saison) {
   htmltools::tags$option(value = saison, selected = "selected", saison)
@@ -242,6 +291,7 @@ js_filtres <- r"(function(el, x) {
   const reset = document.getElementById("reinitialiser-filtres");
   const resultCount = document.getElementById("compteur-resultats");
   const graph = el;
+
   const toArray = value => {
     if (value == null) return [];
     if (Array.isArray(value) || ArrayBuffer.isView(value)) return Array.from(value);
@@ -313,8 +363,799 @@ htmltools::tagList(
 )
 ```
 
-### Comment lire le graphe
+### Introduction {data-width="40"}
 
-Recherchez un participant par son nom et choisissez une ou plusieurs saisons dans la liste (Cmd/Ctrl + clic). Les points hors saisons sélectionnées disparaissent; la recherche met en évidence les noms correspondants et affiche le nombre de résultats. « Tout afficher » réinitialise les filtres. Les liens restent en arrière-plan pour garder le contexte du réseau. Survolez un point pour ses informations; sa taille augmente avec son nombre de participations. La couleur correspond à la saison la plus récente du participant. Utilisez la molette pour zoomer et faites glisser pour vous déplacer.
+Koh Lanta est une émission de Télé-Réalité / Aventure française, le concept repose sur un groupe d'aventurier qui s'affrontent au cours d'épreuves diverses afin d'être le dernier en lice et d'empocher la somme de 100 000 Euros. Depuis 2001, la production alterne entre saisons classiques composées de nouveaux aventuriers et saisons spéciales qui mettent en scène des candidats ayant marqué leurs précentes aventures. Nous avons donc chercher à comprendre : **« Quels facteurs influencent le plus le retour d’un candidat dans l’aventure Koh-Lanta ? »** Pour y répondre, nous avons étudié les parcours des candidats selon trois axes. Nous avons d’abord analysé le réseau des participants, en reliant ceux qui ont partagé une même saison. Nous nous sommes ensuite intéressés à leurs compétences dans l’aventure, notamment leur niveau en survie et leurs performances aux épreuves. Enfin, nous avons étudié leur popularité à travers les recherches Google associées à leur nom. En croisant ces approches, nous cherchons à mieux comprendre quels facteurs peuvent être liés au retour d’un aventurier dans l’émission.
 
-Le graphe avec ses attributs est également enregistré dans `exports/kohlanta_reseau.graphml`.
+**Comment lire le graphe :**
+
+Chaque point de ce graphe représente un candidat et non une participation, la taille du point varie en fonction du nombre de participations. La couleur du noeud est indexée sur la couleur donnée à la première saison de participation. Un lien entre deux points montre qu'il y a eu au moins une particiaption dans une même saison entre les deux candidats.
+
+En passant le curseur au dessus d'un candidat un pop up s'affiche avec les inforamtions les plus utiles, soit le nombre de participations, l'indice global du niveau de l'aventurier\*, le nombre de jours de survie sur l'entiereté des saisons jouées, le nombre de victoires individuelles et une liste des saisons auxquelles l'aventurier a participé.
+
+Il est possible de rechercher un participant par son nom et de choisir une ou plusieurs saisons dans la liste (Cmd/Ctrl + clic). Les points non sélectionnés sont grisés; la recherche met en évidence les noms correspondants et affiche le nombre de résultats. Le bouton « Tout afficher » réinitialise les filtres.
+
+\* : L'Indice est calculé par le site koh-lanta stats en additionnant les notes obtenues sur **quatre critères : les performances aux épreuves, la survie au camp, la stratégie et le palmarès final**, auxquels s'ajoutent des bonus pour la régularité, les records et les bonnes saisons. Le score total est ensuite ramené sur 100 en prenant comme référence le meilleur aventurier (actuellement Claude, noté 100), ce qui permet de comparer tous les candidats entre eux.
+
+# Analyses du réseau
+
+## Row {data-height="125"}
+
+### Degré moyen
+
+```{r}
+flexdashboard::valueBox(round(deg_moy, 2), caption = "Degré moyen", icon = "fa-share-alt")
+```
+
+### Degré médian
+
+```{r}
+flexdashboard::valueBox(round(deg_med, 2), caption = "Degré médian", icon = "fa-share-alt")
+```
+
+### Transitivité
+
+```{r}
+flexdashboard::valueBox(round(transitivite_globale, 3), caption = "Transitivité globale", icon = "fa-link")
+```
+
+### Diamètre
+
+```{r}
+flexdashboard::valueBox(diametre_reseau, caption = "Diamètre (liens)", icon = "fa-arrows-alt")
+```
+
+## Row {data-height="100"}
+
+### Interprétation générale des indicateurs
+
+Le réseau de Koh-Lanta est fortement regroupé : sa transitivité de 0,75 signifie que les participants liés à un même aventurier ont souvent aussi partagé une saison entre eux. Le degré moyen (22,02) et le degré médian (20) montrent qu’un participant est relié directement à une vingtaine d’autres aventuriers en général. Enfin, le diamètre de 4 liens indique que les participants les plus éloignés dans la partie connectée du réseau restent accessibles en quelques étapes. Ces connexions traduisent des saisons partagées, souvent grâce aux aventuriers revenus dans l’émission ; elles ne mesurent pas directement les alliances ni les relations personnelles.
+
+## Row {data-height="360"}
+
+### Liens directs entre participants {data-width="50"}
+
+```{r}
+degres <- data.frame(degre = as.vector(reseau_degre))
+ggplot2::ggplot(degres) +
+  ggplot2::aes(x = degre) +
+  ggplot2::geom_histogram(fill = couleurs_kl$jungle, color = couleurs_kl$sable, bins = 20) +
+  ggplot2::geom_vline(data = lignes_moy_med_plot,
+                      ggplot2::aes(xintercept = valeur, colour = Indicateur),
+                      linewidth = 0.8) +
+  ggplot2::scale_colour_manual(values = c("Degré moyen" = couleurs_kl$ocre,
+                                         "Degré médian" = couleurs_kl$braise)) +
+  ggplot2::labs(x = "Nombre de co-participants", y = "Nombre de participants",
+                colour = NULL) +
+  ggplot2::theme_minimal()
+```
+
+### Distances entre participants reliés {data-width="50"}
+
+```{r}
+ggplot2::ggplot(data.frame(distance = distances_reseau)) +
+  ggplot2::aes(x = distance) +
+  ggplot2::geom_histogram(fill = couleurs_kl$jungle, color = couleurs_kl$sable, bins = 20) +
+  ggplot2::labs(x = "Distance géodésique (liens)", y = "Nombre de paires reliées") +
+  ggplot2::theme_minimal()
+```
+
+## Row {data-height="110"}
+
+### Interprétation — Lien {data-width="50"}
+
+Le degré compte les aventuriers avec lesquels une personne a partagé une saison. La moyenne est de 22,02 et la médiane de 20 : un participant typique a donc environ vingt co-participants distincts dans ce réseau. Les valeurs très élevées correspondent surtout aux aventuriers revenus dans plusieurs saisons, qui ont mécaniquement rencontré davantage de candidats.
+
+### Interprétation — Distances {data-width="50"}
+
+Une distance de 1 signifie que deux aventuriers ont partagé une saison ; une distance de 2 signifie qu’on peut passer de l’un à l’autre par un troisième aventurier. Le diamètre est de 4 : dans la plus grande distance observée, deux participants reliés sont séparés par au plus quatre liens. Cela suggère que les saisons de retour créent des chemins entre des générations de candidats.
+
+## Row {data-height="370"}
+
+### Participants les plus connectés — degré {data-width="50"}
+
+```{r}
+ggplot2::ggplot(top_degre) +
+  ggplot2::aes(x = stats::reorder(Participant, Degre), y = Degre) +
+  ggplot2::geom_col(fill = couleurs_kl$jungle) +
+  ggplot2::coord_flip() +
+  ggplot2::labs(x = NULL, y = "Degré", title = "Top 10 des degrés") +
+  ggplot2::theme_minimal()
+```
+
+### Participants qui servent de ponts — intermédiarité {data-width="50"}
+
+```{r}
+ggplot2::ggplot(top_intermediarite) +
+  ggplot2::aes(x = stats::reorder(Participant, Intermediarite), y = Intermediarite) +
+  ggplot2::geom_col(fill = couleurs_kl$braise) +
+  ggplot2::coord_flip() +
+  ggplot2::labs(x = NULL, y = "Intermédiarité", title = "Top 10 des intermédiaires") +
+  ggplot2::theme_minimal()
+```
+
+## Row {data-height="110"}
+
+### Interprétation — degré {data-width="50"}
+
+Freddy (76), Ugo (72) et Teheiura (69) arrivent en tête. Ils ont partagé une ou plusieurs saisons avec beaucoup d’autres candidats. Leur position centrale reflète en partie leurs retours dans l’émission ; elle ne signifie pas à elle seule qu’ils ont été les plus influents dans le jeu.
+
+### Interprétation — intermédiarité {data-width="50"}
+
+Ce graphique repère les personnes qui se trouvent souvent sur les chemins les plus courts entre différentes parties du réseau. Parmi les aventuriers les plus connectés, Clémentine a l’intermédiarité la plus élevée (11 237), devant Freddy (9 713) et Ugo (9 563). Elle peut donc relier des groupes de candidats qui se croisent moins souvent. C’est une centralité différente du simple nombre de co-participants.
+
+## Row {data-height="480"}
+
+### Comparer les participants les plus connectés {data-width="65"}
+
+```{r}
+knitr::kable(
+  head(tableau_centralites[order(-tableau_centralites$Degre),
+                           c("Participant", "Degre", "Proximite", "Intermediarite", "Vecteur_propre")], 12),
+  digits = 3,
+  col.names = c("Participant", "Degré", "Proximité", "Intermédiarité", "Vecteur propre"),
+  caption = "12 participants au degré le plus élevé"
+)
+```
+
+### Interprétation — centralités {data-width="35"}
+
+Il confirme que le classement dépend de la mesure choisie : Freddy a le plus de liens directs, tandis que Clémentine ressort particulièrement comme intermédiaire. Le vecteur propre favorise les personnes reliées à d’autres personnes centrales ; Freddy y arrive en tête. Les valeurs de proximité affichées sont toutes arrondies à 0,001, donc ce tableau ne permet pas vraiment de départager les participants sur ce critère.
+
+```{r prep-retours, include=FALSE}
+# ---- Données et préparation (identique à analyses_lucie_graphiques.R) ----
+suppressPackageStartupMessages(library(tidyverse))
+SEUIL_RETOURS <- 1   # une saison compte comme "saison de retours" s'il y a eu au moins 1 ancien candidat
+FICHIER <- c(file.path(dossier, "Data", "df_kohlanta.csv"),
+             file.path(dossier, "df_kohlanta.csv"))
+FICHIER <- FICHIER[file.exists(FICHIER)][1]
+stopifnot("df_kohlanta.csv introuvable (dans Data/ ou à côté du .Rmd)" = !is.na(FICHIER))
+bleu   <- couleurs_kl$jungle
+orange <- couleurs_kl$ocre
+theme_set(
+  theme_minimal(base_size = 12) +
+    theme(plot.title.position = "plot",
+          plot.title    = element_text(face = "bold", colour = couleurs_kl$ardoise),
+          plot.subtitle = element_text(colour = couleurs_kl$ardoise),
+          axis.text = element_text(colour = couleurs_kl$ardoise),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_line(colour = "#E4E8E1"),
+          panel.background = element_rect(fill = "white", colour = NA),
+          plot.background = element_rect(fill = "white", colour = NA))
+)
+
+# Tout est lu en texte, puis les colonnes numériques sont converties à la main :
+# dans le CSV les nombres sont écrits "25.0" (point) ; avec decimal_mark = ","
+# readr prenait le point pour un séparateur de milliers -> 25.0 devenait 250.
+# Séparateur détecté sur la 1re ligne (";" ou ","), noms de colonnes nettoyés
+entete <- readLines(FICHIER, n = 1, encoding = "UTF-8", warn = FALSE)
+sep <- if (str_count(entete, ";") >= str_count(entete, ",")) ";" else ","
+raw <- read_delim(FICHIER, delim = sep,
+                  col_types = cols(.default = col_character()),
+                  na = c("", "NA", "N/A", "-"),
+                  locale = locale(encoding = "UTF-8"),
+                  show_col_types = FALSE)
+names(raw) <- names(raw) %>% str_remove("^\ufeff") %>% str_trim() %>% str_to_lower()
+
+# Le fichier doit contenir 1 ligne par participation avec ces colonnes
+colonnes_requises <- c("slug", "nom", "saison_slug", "annee", "statut", "age", "equipe",
+                       "profession", "jour_elimination", "votes_contre", "epreuves_gagnees")
+manque <- setdiff(colonnes_requises, names(raw))
+if (length(manque))
+  stop("Colonnes manquantes dans ", FICHIER, " : ", paste(manque, collapse = ", "),
+       "\nColonnes trouvées : ", paste(names(raw), collapse = ", "), call. = FALSE)
+
+cols_num <- c("annee", "age", "jour_elimination", "votes_contre",
+              "epreuves_gagnees", "victoires_avant", "saisons_jouees")
+cols_num <- intersect(cols_num, names(raw))
+
+# accepte "25.0" comme "25,0" : la virgule est remplacée par un point
+vers_num <- function(x)
+  suppressWarnings(parse_number(str_replace(as.character(x), ",", "."),
+                                locale = locale(decimal_mark = ".", grouping_mark = "")))
+
+# Diagnostic : quelles valeurs bloquent la conversion en nombre ?
+for (v in cols_num) {
+  bad <- raw[[v]][!is.na(raw[[v]]) &
+                    is.na(suppressWarnings(as.numeric(str_replace(raw[[v]], ",", "."))))]
+  if (length(bad)) cat(v, ": valeurs non numériques ->", paste(unique(bad), collapse = " | "), "\n")
+}
+
+raw <- raw %>% mutate(across(all_of(cols_num), vers_num))
+
+# Garde-fou : l'âge doit être plausible (sinon le problème des décimales est revenu)
+cat("Âge : min", min(raw$age, na.rm = TRUE), "| max", max(raw$age, na.rm = TRUE), "\n")
+stopifnot("Âges > 100 : vérifier la lecture des décimales" = max(raw$age, na.rm = TRUE) <= 100)
+
+part <- raw %>%
+  select(-any_of(c("recherche_google", "url", "photo_url"))) %>%
+  mutate(
+    annee_debut = as.integer(str_extract(slug, "\\d{4}")),
+    est_origine = annee == annee_debut,
+    statut      = replace_na(statut, "Éliminé")   # statut vide = éliminé
+  )
+stopifnot(sum(part$est_origine) == n_distinct(part$slug))
+
+saisons_kl <- part %>%
+  group_by(saison_slug, annee) %>%
+  summarise(n_candidats = n(), n_anciens = sum(!est_origine), .groups = "drop") %>%
+  left_join(
+    part %>% filter(est_origine) %>% group_by(saison_slug) %>%
+      summarise(jour_max  = max(jour_elimination, na.rm = TRUE),
+                votes_tot = sum(votes_contre, na.rm = TRUE), .groups = "drop"),
+    by = "saison_slug") %>%
+  mutate(saison_retours = n_anciens >= SEUIL_RETOURS)
+
+annees_retours <- saisons_kl$annee[saisons_kl$saison_retours]
+
+resume <- part %>%
+  group_by(slug) %>%
+  summarise(
+    n_participations   = n(),
+    n_victoires_saison = sum(statut == "Vainqueur"),
+    annee_retour1      = suppressWarnings(min(as.numeric(annee[!est_origine]))),
+    .groups = "drop") %>%
+  mutate(annee_retour1 = na_if(annee_retour1, Inf))
+
+perso <- part %>%
+  filter(est_origine) %>%
+  select(slug, nom, saison_slug, annee_debut, age, profession, equipe,
+         statut_orig = statut, jour_elimination, votes_contre, epreuves_gagnees) %>%
+  left_join(resume, by = "slug") %>%
+  left_join(saisons_kl %>% select(saison_slug, jour_max, votes_tot, n_candidats),
+            by = "saison_slug") %>%
+  group_by(saison_slug) %>%
+  mutate(rang_survie_pct = percent_rank(jour_elimination),
+         rang_votes_pct  = percent_rank(votes_contre)) %>%
+  ungroup() %>%
+  mutate(
+    revenant          = n_participations > 1,
+    n_retours         = n_participations - 1L,
+    vainqueur_orig    = statut_orig == "Vainqueur",
+    finaliste_orig    = statut_orig %in% c("Vainqueur", "Finaliste"),
+    jours_rel         = jour_elimination / jour_max,
+    votes_par_jour    = votes_contre / jour_elimination,
+    part_votes_saison = votes_contre / votes_tot,
+    log_votes         = log1p(votes_contre),
+    tranche_age       = cut(age, c(17, 25, 35, 45, 100),
+                            labels = c("18-25", "26-35", "36-45", "46+")),
+    opportunites      = map_int(annee_debut, ~ sum(annees_retours > .x)),
+    eligible          = opportunites > 0,
+    statut_orig       = fct_infreq(statut_orig)
+  )
+
+perso_el <- perso %>% filter(eligible)
+
+
+
+# Rend un graphique ggplot dynamique (plotly) comme sur les autres pages.
+# Le titre est déjà donné par l'en-tête ### : on ne garde que le sous-titre
+# (en haut) et la note éventuelle (en bas) du graphique.
+dyn <- function(g, pos_texte = NULL) {
+  lab  <- function(x) tryCatch(g$labels[[x]], error = function(e) NULL)
+  sous <- lab("subtitle"); note <- lab("caption")
+  p <- plotly::plotly_build(plotly::ggplotly(g))
+  # Étiquettes (geom_text) : on force leur position pour qu'elles soient
+  # entièrement dans le blanc, à côté de la barre ("middle right" pour des
+  # barres horizontales, "top center" pour des barres verticales).
+  if (!is.null(pos_texte))
+    p$x$data <- lapply(p$x$data, function(tr) {
+      if (identical(tr$mode, "text")) {
+        tr$textposition <- pos_texte
+        tr$cliponaxis   <- FALSE
+        if (is.character(tr$text)) tr$text <- gsub("\n", "<br>", tr$text)
+      }
+      tr
+    })
+  p <- plotly::layout(
+    p,
+    title  = list(text = if (!is.null(sous)) paste0("<sup>", sous, "</sup>") else "",
+                  x = 0.02, xanchor = "left"),
+    margin = list(t = if (!is.null(sous)) 60 else 30,
+                  b = if (!is.null(note)) 120 else 50)
+  )
+  if (!is.null(note))
+    p <- plotly::layout(p, annotations = list(list(
+      text = gsub("\n", "<br>", note), x = 0, y = -0.16,
+      xref = "paper", yref = "paper", showarrow = FALSE,
+      xanchor = "left", align = "left", font = list(size = 10))))
+  plotly::config(p, displaylogo = FALSE)
+}
+
+# G2 : catégories + fonction commune
+perso_el <- perso_el %>%
+  mutate(
+    survie_cat = cut(rang_survie_pct, c(-Inf, .25, .5, .75, Inf), include.lowest = TRUE,
+                     labels = c("Éliminés\nen 1er", "Début\nde classement",
+                                "Fin de\nclassement", "Derniers\nen jeu")),
+    votes_cat  = cut(rang_votes_pct, c(-Inf, .25, .5, .75, Inf), include.lowest = TRUE,
+                     labels = c("Peu votés\n(25 % bas)", "Plutôt\npeu votés",
+                                "Plutôt\nvotés", "Très votés\n(25 % haut)"))
+  )
+taux_ref <- mean(perso_el$revenant)
+
+taux_graph <- function(df, var, titre, sous_titre = NULL, ordonner = FALSE) {
+  d <- df %>% filter(!is.na(.data[[var]])) %>%
+    group_by(modalite = .data[[var]]) %>%
+    summarise(n = n(), k = sum(revenant), .groups = "drop") %>%
+    mutate(taux = k / n,
+           lo = map2_dbl(k, n, ~ binom.test(.x, .y)$conf.int[1]),
+           hi = map2_dbl(k, n, ~ binom.test(.x, .y)$conf.int[2]),
+           modalite = if (ordonner) fct_reorder(as.character(modalite), taux, .desc = TRUE)
+           else modalite)
+  ggplot(d, aes(modalite, taux)) +
+    geom_col(fill = orange, width = .7) +
+    geom_errorbar(aes(ymin = lo, ymax = hi), width = .15, colour = couleurs_kl$ardoise) +
+    geom_hline(yintercept = taux_ref, linetype = "dashed", colour = couleurs_kl$ardoise) +
+    geom_text(aes(y = hi, label = paste0(round(100 * taux), " %\n(n=", n, ")")),
+              vjust = -0.3, size = 3.4) +
+    scale_y_continuous(labels = scales::percent, expand = expansion(mult = c(0, .3))) +
+    labs(title = titre, subtitle = sous_titre, x = NULL, y = "% de revenants")
+}
+
+```
+
+# Statistiques descriptives
+
+## Row {data-height="420"}
+
+### Nombre de participations par candidat
+
+```{r g03a}
+dist_part <- perso %>% count(n_participations)
+g03a <- ggplot(dist_part, aes(factor(n_participations), n)) +
+  geom_col(fill = couleurs_kl$jungle) + geom_text(aes(label = n), vjust = -0.3) +
+  labs(x = "Nombre de participations", y = "Candidats",
+       title = "Combien de fois les candidats participent-ils ?")
+dyn(g03a, "top center")
+```
+
+### Statut atteint à la saison d'origine
+
+```{r gD03}
+d_statuts <- count(perso, statut_orig)
+gD03 <- ggplot(d_statuts, aes(fct_reorder(statut_orig, n), n)) +
+  geom_col(fill = couleurs_kl$feuille) +
+  geom_text(aes(label = n), hjust = -0.2) +
+  coord_flip() + expand_limits(y = max(d_statuts$n) * 1.1) +
+  labs(x = NULL, y = "Candidats", title = "Statut atteint à la saison d'origine")
+dyn(gD03, "middle right")
+```
+
+## Row {data-height="140"}
+
+### Interprétation — Nombre participations
+
+La très grande majorité des candidats ne participe qu’une seule fois : 444 sur 527 (84 %). Seuls 83 candidats (16 %) reviennent au moins une fois, dont 64 une seule fois ; au-delà, les retours deviennent exceptionnels (10 candidats avec 3 participations, 7 avec 4, puis un seul avec 5 et un seul avec 6). Revenir est donc rare, ce qui justifie la question centrale du projet : quels profils sont rappelés, et pourquoi eux plutôt que d’autres ?
+
+### Interprétation — Statut
+
+Neuf candidats sur dix (474 sur 527, soit 90 %) ont été éliminés au cours de leur première saison. 30 sont vainqueurs (6 %) et 22 finalistes (4 %). Un seul candidat a abandonné. Les statuts manquants (NA) ont été recodés en « Éliminé » : c’est un choix de notre part, qui semble cohérent pour le nombre de vainqueurs. Les finalistes et vainqueurs sont très minoritaires : nous regarderons plus loin si leur parcours augmente leurs chances d’être rappelés.
+
+## Row {data-height="800"}
+
+### Composition des saisons : nouveaux vs anciens {data-width="80"}
+
+```{r gD05}
+comp <- saisons_kl %>%
+  mutate(nouveaux  = n_candidats - n_anciens,
+         etiquette = paste0(saison_slug, " (", annee, ")"),
+         etiquette = fct_reorder(etiquette, annee))
+
+lab_anciens <- comp %>%
+  filter(n_anciens > 0) %>%
+  mutate(txt = paste0(n_anciens, " anciens (", round(100 * n_anciens / n_candidats), " %)"))
+
+gD05 <- comp %>%
+  select(etiquette, Nouveaux = nouveaux, Anciens = n_anciens) %>%
+  pivot_longer(c(Nouveaux, Anciens), names_to = "type", values_to = "n") %>%
+  ggplot(aes(etiquette, n, fill = type)) +
+  geom_col() +
+  geom_text(data = lab_anciens, aes(etiquette, n_candidats, label = txt),
+            inherit.aes = FALSE, hjust = -0.08, size = 3) +
+  scale_x_discrete(limits = rev(levels(comp$etiquette))) +   # plus ancienne en haut
+  coord_flip() +
+  scale_y_continuous(expand = expansion(mult = c(0, .25))) +
+  scale_fill_manual(values = c(Nouveaux = couleurs_kl$jungle, Anciens = couleurs_kl$braise)) +
+  labs(x = NULL, y = "Candidats", fill = NULL,
+       title = "Composition de chaque saison : nouveaux vs anciens")
+dyn(gD05, "middle right")
+```
+
+### Interprétation — Saisons avec revenants {data-width="20"}
+
+Sur 34 saisons, 25 ne comptent que de nouveaux candidats. Neuf accueillent des anciens, de deux types :
+
+-   6 saisons « all-stars », entièrement composées d’anciens (100 %), dont 2026 All-Stars, 2021 La Légende et 2018 Le Combat des héros
+
+-   3 saisons mixtes, où anciens et nouveaux se mélangent : Le Choc des héros (2010, 50 % d’anciens), L’Île des héros (2020, 25 %) et La Tribu maudite (2024, 8 %).
+
+Nous considérons comme « saisons de retours » toutes les saisons qui comptent au moins un ancien candidat, soit ces 9 saisons. Ce sont les seules où un candidat peut revenir : elles définissent les occasions de retour sur lesquelles repose la suite de l’analyse.
+
+# Profil des revenants
+
+## Row {data-height="600"}
+
+### Taux de retour par saison d'origine {data-width="50"}
+
+```{r g03d}
+# On ne garde que les saisons ayant eu au moins une saison de retours ensuite
+# (perso_el) : pour les autres, "0 %" serait un artefact, pas une vraie mesure.
+cohorte <- perso_el %>%
+  group_by(saison_slug, annee_debut) %>%
+  summarise(n = n(), n_rev = sum(revenant), taux = n_rev / n, .groups = "drop") %>%
+  arrange(annee_debut, saison_slug) %>%
+  mutate(etiquette = paste0(saison_slug, " (", annee_debut, ")"),
+         etiquette = factor(etiquette, levels = etiquette),
+         texte = paste0(round(100 * taux), " %  (", n_rev, "/", n, ")"))
+
+exclues <- perso %>% distinct(saison_slug, annee_debut) %>%
+  filter(!saison_slug %in% cohorte$saison_slug) %>% arrange(annee_debut) %>%
+  mutate(e = paste0(saison_slug, " (", annee_debut, ")")) %>% pull(e)
+
+g03d <- ggplot(cohorte, aes(etiquette, taux)) +
+  geom_col(fill = couleurs_kl$jungle) +
+  geom_text(aes(label = texte), hjust = -0.08, size = 3.2) +
+  scale_x_discrete(limits = rev(levels(cohorte$etiquette))) +   # plus ancienne en haut
+  scale_y_continuous(labels = scales::percent, expand = expansion(mult = c(0, .25))) +
+  coord_flip() +
+  labs(x = NULL, y = "% de revenants",
+       title = "Taux de retour par saison d'origine",
+       subtitle = "Saisons classées de la plus ancienne (haut) à la plus récente (bas) ; (revenants / candidats)")
+dyn(g03d, "middle right")
+```
+
+### Nombre de retours selon le statut à l'origine {data-width="50"}
+
+```{r g05d}
+SEUIL_LABEL <- 0.03   # on n'écrit pas le % dans les segments < 3 % (illisible)
+
+d05d <- perso_el %>%
+  count(statut_orig, n_retours) %>%
+  group_by(statut_orig) %>%
+  mutate(N = sum(n), pct = n / N) %>%
+  ungroup() %>%
+  arrange(statut_orig) %>%
+  mutate(statut_lab = fct_inorder(paste0(statut_orig, "\n(n = ", N, ")")),
+         n_retours  = factor(n_retours))
+
+g05d <- ggplot(d05d, aes(statut_lab, n, fill = n_retours)) +
+  geom_col(position = "fill") +
+  geom_text(data = filter(d05d, pct >= SEUIL_LABEL),
+            aes(label = scales::percent(pct, accuracy = 1)),
+            position = position_fill(vjust = .5), size = 3.2) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = grDevices::colorRampPalette(c(couleurs_kl$jungle, couleurs_kl$feuille, couleurs_kl$ocre, couleurs_kl$braise))(nlevels(d05d$n_retours))) +
+  labs(x = "Statut à l'origine (effectif)", y = NULL, fill = "Nb de retours",
+       title = "Combien de fois reviennent les candidats, selon leur statut ?")
+dyn(g05d)
+```
+
+## Row {data-height="170"}
+
+### Interprétation — taux de retour par saison {data-width="50"}
+
+Le taux de retour va de 0 % à 33 % selon la saison d'origine. Les saisons du début (2001 à 2012) sont les plus « productrices » de revenants : *Palau* (2009) atteint 33 % (6 candidats sur 18), *Raja Ampat* (2011) et *Malaisie* (2012) 30 %. À partir de 2015, les taux sont le plus souvent compris entre 5 % et 15 %, et trois saisons n'ont fourni aucun revenant : *Le Choc des héros* (2010, 0 sur 7), *Le Totem maudit* (2022) et *Les Chasseurs d'immunité* (2024). Ces écarts s'expliquent en partie par le temps écoulé : un candidat de 2002 a eu bien plus d'occasions d'être rappelé qu'un candidat de 2024, donc les saisons récentes sont à lire avec prudence.
+
+### Interprétation — retours selon le statut {data-width="50"}
+
+Le statut atteint à l'origine change nettement le nombre de retours : 88 % des éliminés ne reviennent jamais, contre 59 % des vainqueurs et 29 % des finalistes seulement. Les retours multiples (3 ou plus) se concentrent chez les vainqueurs (10 %) et les finalistes (15 %), alors qu'ils sont très rares chez les éliminés. Attention aux effectifs : avec 21 finalistes et 29 vainqueurs, un seul candidat pèse 3 à 5 points de pourcentage. L'unique abandon n'est pas interprétable.
+
+## Row {data-height="520"}
+
+### Revenants vs non-revenants {data-width="60"}
+
+```{r g05a}
+g05a <- perso_el %>%
+  select(revenant, jours_rel, log_votes, epreuves_gagnees, age) %>%
+  pivot_longer(-revenant, names_to = "variable", values_to = "valeur") %>%
+  filter(!is.na(valeur)) %>%
+  mutate(
+    variable = factor(variable,
+      levels = c("jours_rel", "log_votes", "epreuves_gagnees", "age"),
+      labels = c("Durée de survie\n(part de la saison tenue ; 1 = jusqu'au bout)",
+                 "Votes reçus contre soi\n(échelle log : log(1 + votes))",
+                 "Épreuves individuelles\ngagnées",
+                 "Âge à la 1re participation\n(ans)")),
+    revenant = factor(revenant, levels = c(FALSE, TRUE),
+                      labels = c("Non revenant", "Revenant"))
+  ) %>%
+  ggplot(aes(revenant, valeur, fill = revenant)) +
+  geom_boxplot(width = .5, outlier.alpha = .3) +
+  scale_fill_manual(values = c("Non revenant" = bleu, "Revenant" = orange)) +
+  facet_wrap(~ variable, scales = "free_y") +
+  labs(x = NULL, y = NULL, fill = NULL, title = "Revenants vs non-revenants") +
+  theme(legend.position = "right", legend.text = element_text(size = 11),
+        axis.text.x = element_blank(), axis.ticks.x = element_blank())
+dyn(g05a)
+```
+
+### Interprétation — revenants vs non-revenants {data-width="40"}
+
+Les revenants se distinguent surtout par leur parcours dans leur saison d'origine, beaucoup moins par leur profil personnel.
+
+-   **Survie** : la médiane des revenants est proche de 1 (ils vont presque jusqu'au bout de leur saison), contre environ 0,55 pour les non-revenants, dont la moitié est éliminée avant d'avoir tenu 55 % de la saison. C'est donc un facteur interessant par rapport à notre problématique.
+
+-   **Épreuves gagnées** : la médiane est de 2 pour les revenants contre 0 pour les non-revenants. C'est l'une des différences les plus nettes, le nombre d'épreuve gagnées est un facteur qui explique pourquoi un candidat est rappelé plus qu'un autre.
+
+-   **Votes reçus** : le nombre de votes est très inégal selon les candidats, donc sur une échelle normale quelques valeurs très élevées écraseraient tout le graphique. Nous avons utilisé une échelle logarithmique, qui rapproche les grandes valeurs pour rendre les écarts lisibles. On ajoute 1 aux votes avant le calcul (log(1 + votes)) car le logarithme n'existe pas pour 0. Les revenants reçoivent plus de votes. Cependant, plus on reste longtemps, plus on a d'occasions d'être voté, ce qui peut suffire à expliquer l'écart.
+
+-   **Âge** : les deux distributions sont presque identiques (médiane autour de 32-33 ans). L'âge ne semble pas jouer sur les profils rappelés pour une autre saison. Il est important de notifier que nous avons des données manquantes pour l'âge de première participation.
+
+## Row {data-height="420"}
+
+### Taux de retour selon le statut
+
+```{r g2_statut}
+g2_statut <- taux_graph(perso_el, "statut_orig", "Le statut atteint à l'origine",
+                        paste0("Les meilleurs parcours sont-ils rappelés ?",
+                               round(100 * taux_ref), " %)"), ordonner = TRUE)
+dyn(g2_statut, "top center")
+```
+
+### Taux de retour selon la survie
+
+```{r g2_survie}
+g2_survie <- taux_graph(perso_el, "survie_cat", "La survie dans sa saison",
+                        "Position dans le classement d'élimination de sa saison")
+dyn(g2_survie, "top center")
+```
+
+### Taux de retour selon les votes reçus
+
+```{r g2_votes}
+g2_votes  <- taux_graph(perso_el, "votes_cat", "Les votes reçus",
+                        "Être clivant aide-t-il à revenir ?")
+dyn(g2_votes, "top center")
+```
+
+## Row {data-height="200"}
+
+### Interprétation — statut
+
+Les finalistes sont de loin les plus rappelés : 71 % reviennent (n = 21), contre 41 % des vainqueurs et 12 % des éliminés, pour un taux moyen d'environ 16 %. Les finalistes reviennent donc plus souvent que les vainqueurs, ce qui est un point interessant. Les IC 95 % sont larges sur les petits effectifs : l'écart entre finalistes et vainqueurs n'est pas assuré, alors que celui avec les éliminés l'est.
+
+### Interprétation — survie
+
+Plus un candidat va loin dans sa saison, plus il a de chances de revenir : 4 % pour le premier quart des éliminés, 10 %, 17 %, puis 34 % pour le dernier quart (ceux qui restent le plus longtemps en jeu), soit plus du double de la moyenne. Seul ce dernier groupe dépasse nettement la moyenne : le retour récompense surtout les parcours longs.
+
+### Interprétation — votes reçus
+
+Les candidats les plus votés reviennent à 48 %, contre 7 à 11 % pour les trois autres groupes : l'écart est concentré sur les profils les plus clivants plutôt que progressif. Les groupes sont de tailles inégales (89 à 218 candidats), probablement à cause des nombreux candidats à égalité avec peu ou pas de votes. Ce résultat est lié à la survie (il faut rester longtemps pour être beaucoup voté) : on ne peut pas y voir un effet « clivant » isolé.
+
+# Popularité et retour
+
+```{r}
+#install.packages(c("ggplot2", "dplyr"))
+library(ggplot2)
+library(dplyr)
+
+df <- read.csv("Data/df_kohlanta.csv", stringsAsFactors = FALSE, encoding = "UTF-8")
+
+d <- df %>% filter(!is.na(recherche_google)) # On garde les lignes où l'indice est connu
+
+# Convertions des variables annee, statut et equipe en facteurs
+d$annee  <- as.factor(d$annee)
+d$statut <- as.factor(d$statut)
+d$equipe <- as.factor(d$equipe)
+```
+
+## Row {data-height="90"}
+
+### Résumé de l'indice de recherche Google
+
+```{r}
+val_min <- min(d$recherche_google)
+val_max <- max(d$recherche_google)
+
+resume <- data.frame(
+  "Minimum"              = val_min,
+  "Maximum"              = val_max,
+  "Moyenne"              = round(mean(d$recherche_google), 2),
+  "Médiane"              = round(median(d$recherche_google), 2),
+  "1er quartile (25 %)"  = round(quantile(d$recherche_google, 0.25), 2),
+  "3e quartile (75 %)"   = round(quantile(d$recherche_google, 0.75), 2),
+  "Écart-type"           = round(sd(d$recherche_google), 2),
+  "Indices = 0"          = sum(d$recherche_google == 0),
+  check.names = FALSE
+)
+
+knitr::kable(resume, align = "c", digits = 2, row.names = FALSE)
+```
+
+## Row {data-height="430"}
+
+### Interpretation - Définition de l'indice de recherche Google
+
+**Que mesure l'indice ?** Pour chaque candidat, nous avons récupéré sur Google Trends (par scraping) les recherches « Prénom koh lanta » en France, semaine par semaine, sur l'année de sa participation. Google ramène la semaine la plus forte à 100, et les autres en proportion. Notre indice `recherche_google` est la moyenne de ces semaines sur l'année.
+
+-   Indice bas : intérêt concentré sur une ou deux semaines.
+-   Indice élevé : intérêt étalé sur l'année.
+
+**Lecture du tableau**
+
+-   Moyenne 6,08 et médiane 5,38 : l'indice est faible en général, car même un pic à 100 donne une moyenne basse s'il est ponctuel. La moyenne, un peu au-dessus de la médiane, est tirée par quelques candidats à l'intérêt plus étalé.
+-   Quartiles 2,69 et 8,94 : un quart des candidats est sous 2,69, un quart au-dessus de 8,94.
+-   Écart-type 4,54 : proche de la moyenne, donc les indices sont très dispersés.
+-   Maximum 21,93 : ce sont les deux Lola (voir ci-dessous), donc une valeur à prendre avec précaution.
+-   Minimum 0 (85 cas) : Google renvoie 0 quand il y a trop peu de recherches. Ce sont surtout des candidats éliminés tôt et des saisons anciennes.
+
+**Limites**
+
+-   Pas un volume : chaque candidat est sur sa propre échelle. On compare la durée de l'intérêt des candidats, pas des nombres de recherches.
+-   Pas de données avant 2004 : Google Trends n'existe pas avant. Les candidats des saisons 2001 à 2003 (50 participations) n'ont donc pas d'indice.
+-   Indices tronqués pour les homonyme : la requête ne porte que sur le prénom. En 2026, il y a eu deux saisons, avec deux Lola (lola-2026 en première participation, lola-2020 en deuxième). Les deux ont donc le même indice sur leur participation de 2026 (le maximum à 21,93), qui mélange leurs recherches.
+
+## Row {data-height="500"}
+
+### Indice de recherche Google selon l'année de participation
+
+```{r}
+#install.packages("ggrepel")
+library(ggrepel)
+
+d_out <- d %>%
+  group_by(annee) %>%
+  mutate(est_outlier = recherche_google %in% boxplot.stats(recherche_google)$out) %>%
+  ungroup()
+
+ggplot(d_out, aes(x = annee, y = recherche_google)) +
+  geom_boxplot(fill = couleurs_kl$ocre, alpha = 0.7, outlier.color = couleurs_kl$ardoise) +
+  geom_text_repel(data = filter(d_out, est_outlier),
+                  aes(label = slug),
+                  size = 3, color = couleurs_kl$ardoise,
+                  nudge_x = 0.35,          # pousse les étiquettes à droite du point
+                  direction = "y",         # elles ne se déplacent que verticalement
+                  hjust = 0,
+                  segment.color = couleurs_kl$ardoise,
+                  box.padding = 0.25,
+                  max.overlaps = Inf) +    # affiche toutes les étiquettes, même si dense
+  scale_x_discrete(expand = expansion(add = c(0.6, 1.5))) +
+  labs(x = "Année de participation", y = "Indice moyen annuel des participants") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Indice Google de la 1re participation selon le nombre de participations
+
+```{r}
+av <- read.csv(
+  "Data/kohlanta_stats_aventuriers.csv",
+  sep = ";",
+  dec = ".",
+  fileEncoding = "UTF-8",
+  stringsAsFactors = FALSE
+)
+av$nb_participations <- lengths(strsplit(av$Saisons, "\\s*\\|\\s*"))
+
+premiere <- df %>%
+  filter(!is.na(recherche_google)) %>%
+  group_by(slug) %>%
+  arrange(annee) %>%
+  summarise(recherche_google = first(recherche_google), .groups = "drop")
+
+av2 <- inner_join(av, premiere, by = c("Id" = "slug"))
+
+av2 <- av2 %>%
+  group_by(nb_participations) %>%
+  mutate(n_groupe = n(),
+         est_outlier = recherche_google %in% boxplot.stats(recherche_google)$out) %>%
+  ungroup() %>%
+  mutate(etiquette_axe = paste0(nb_participations, "\n(n = ", n_groupe, ")"),
+         etiquette_axe = factor(etiquette_axe,
+                                levels = unique(etiquette_axe[order(nb_participations)])))
+
+ggplot(av2, aes(x = etiquette_axe, y = recherche_google)) +
+  geom_boxplot(fill = couleurs_kl$braise, outlier.color = couleurs_kl$ardoise) +
+  labs(x = "Nombre de participations", y = "Indice moyen annuel des participants")
+```
+
+## Row {data-height="260"}
+
+### Interpretation - Indice de recherche Google selon l'année de participation
+
+À partir de 2007, la médiane de l'indice augmente progressivement, avec un premier pic en 2014 (médiane d'environ 8,6). Un deuxième pic apparaît en 2020 et 2021 (médiane de l'indice à environ 9 à 10, pendant le Covid). L'indice retombe ensuite jusqu'en 2025 (environ 3,4), puis remonte fortement en 2026 (environ 9).
+
+Les années de pic (2014, 2020, 2021, 2026) ont chacune une saison où reviennent des candidats déjà connus du public. On suppose donc que les candidats "revenants" ont tendance à être recherchés plus longtemps dans l'année.Egalement les saisons 2020 et 2021 ont été diffusées pendant le Covid, une période où les Français étaient plus souvent chez eux et devant la télévision, ce qui a pu étaler l'intérêt dans le temps.
+
+Enfin, sur chaque boxplot, on remarque beaucoup de valeurs aberrantes vers le haut. Ces points sont surtout des candidats restés longtemps dans l'aventure ou des revenants (ex: moussa-2003, moundir-2003). L'intérêt du public se concentre donc sur un petit nombre de candidats, alors que la plupart restent peu recherchés.
+
+### Interpretation - Indice Google de la 1re participation selon le nombre de participations
+
+On remarque que les candidats qui ont participé 2 ou 3 fois ont un indice légèrement plus haut (médiane d'environ 6) que ceux qui n'ont participé qu'une fois (environ 4,7). On suppose donc qu'un candidat recherché plus longtemps dans l'année a plus de chances d'être rappelé pour une autre saison, ce qui peut être l'un des facteurs. Cette différence reste faible et les groupes à 3 participations ou plus sont très petits, donc il faut rester prudent.
+
+## Row {data-height="500"}
+
+### Top 15 des participations par leur indice de recherche Google
+
+```{r}
+top15 <- av2 %>%
+  arrange(desc(recherche_google)) %>%
+  head(15) %>%
+  mutate(label = Id,   
+         texte_barre = paste0(nb_participations,
+                              ifelse(nb_participations > 1, " participations", " participation")))
+
+ggplot(top15, aes(x = reorder(label, recherche_google), y = recherche_google)) +
+  geom_col(fill = couleurs_kl$jungle) +
+  geom_text(aes(label = texte_barre), hjust = -0.1, size = 3.5) +
+  coord_flip() +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.45))) +
+  labs(x = "", y = "Indice moyen annuel (1re participation)")
+```
+
+### Profils d'intérêt (1ère participation) : revenants vs non-revenants
+
+```{r}
+library(scales)   # pour afficher les pourcentages (déjà installé avec ggplot2)
+
+# Seuils des quartiles sur l'indice de la 1re participation
+q <- quantile(av2$recherche_google, probs = c(0.25, 0.75))
+
+av3 <- av2 %>%
+  mutate(
+    profil = case_when(
+      recherche_google <= q[1] ~ "Intérêt court dans le temps (25 % les plus bas)",
+      recherche_google >= q[2] ~ "Intérêt soutenu (25 % les plus hauts)",
+      TRUE                     ~ "Intermédiaire"
+    ),
+    profil = factor(profil, levels = c("Intérêt court dans le temps (25 % les plus bas)",
+                                       "Intermédiaire",
+                                       "Intérêt soutenu (25 % les plus hauts)")),
+    groupe = ifelse(nb_participations > 1, "Revenants", "Non-revenants")
+  )
+
+# Effectifs et pourcentages dans chaque groupe
+resume_profils <- av3 %>%
+  count(groupe, profil) %>%
+  group_by(groupe) %>%
+  mutate(n_groupe = sum(n),
+         pct = n / n_groupe,
+         etiquette_axe = paste0(groupe, "\n(n = ", n_groupe, ")")) %>%
+  ungroup()
+
+ggplot(resume_profils, aes(x = etiquette_axe, y = pct, fill = profil)) +
+  geom_col() +
+  geom_text(aes(label = percent(pct, accuracy = 1)),
+            position = position_stack(vjust = 0.5), size = 4) +
+  scale_y_continuous(labels = percent) +
+  scale_fill_manual(values = c(
+    "Intérêt court dans le temps (25 % les plus bas)" = couleurs_kl$jungle,
+    "Intermédiaire" = couleurs_kl$ocre,
+    "Intérêt soutenu (25 % les plus hauts)" = couleurs_kl$braise
+  )) +
+  labs(x = "", y = "Proportion", fill = "Profil")
+```
+
+## Row {data-height="240"}
+
+### Interpretation - Top 15 des participations par leur indice de recherche Google
+
+On remarque que parmi les 15 candidats dont l'intérêt a été le plus étalé lors de leur première participation, 5 sont revenus (julie-2016, jacques-2024, karima-2016, lola-2020 et nathalie-2008), soit un tiers. Les indices vont d'environ 15 à 22, et les saisons 2016, 2017, 2020, 2021 et 2026 reviennent souvent.
+
+On suppose donc que la popularité auprès du public, mesurée par les recherches Google, contribue aussi au retour d'un candidat, en complément de ses performances dans le jeu. Rappel: L'indice de lola-2026 est tronqué (il mélange ses recherches et les recherches de lola-2020 sur sa 2ème participation en 2026).
+
+### Interpretation - Profils d'intérêt (1ère participation) : revenants vs non-revenants
+
+Dans ce graphique en barres, les candidats sont classés selon l'indice de leur première participation, en trois groupes : les 25 % ayant l'indice le plus bas (« intérêt court dans le temps »), les 25 % ayant l'indice le plus haut (« intérêt soutenu »), et les 50 % restants au milieu (« intermédiaire »). Ces seuils sont les mêmes pour tout le monde. On regarde ensuite comment ces trois profils se répartissent chez les non-revenants (une seule participation) et chez les revenants (deux participations ou plus).
+
+On remarque que les revenants ont moins souvent un intérêt court dans le temps (19 %) que les non-revenants (29 %), et un peu plus souvent un intérêt intermédiaire (53 % contre 46 %) ou soutenu (28 % contre 25 %). On suppose donc que les candidats peu recherchés pendant leur première participation ont moins de chances d'être rappelés, ce qui va dans le sens d'une contribution de la popularité auprès du public au retour d'un candidat.
+
+# Conclusion
+
+## Conclusion {data-height="800"}
+
+### {data-width=50}
+
+```{r conclusion-photo, out.width="100%", fig.align="center"}
+knitr::include_graphics("media-137890.jpg")
+```
+
+### {data-width=50}
+
+Notre analyse montre que plusieurs facteurs sont associés au retour d’un candidat dans Koh-Lanta, mais qu’ils ne jouent pas tous le même rôle. Le parcours dans l’aventure ressort nettement : les candidats qui restent longtemps et atteignent la finale reviennent plus souvent. Dans nos données, 71 % des finalistes sont revenus, contre 41 % des vainqueurs et 12 % des candidats éliminés. Les performances aux épreuves vont dans le même sens : les revenants en ont généralement gagné davantage, même si ces résultats peuvent aussi s’expliquer par le fait qu’ils ont passé plus de temps dans le jeu.
+
+Le réseau complète cette analyse en montrant quels aventuriers occupent une place centrale parmi les candidats ayant partagé une saison. Freddy a le degré le plus élevé : il a participé aux mêmes saisons que beaucoup d’autres aventuriers. Cela ne signifie pas forcément qu’il est le plus fort dans le jeu ; cela indique surtout qu’il est très connecté dans le réseau, en partie grâce à ses participations. D’autres mesures révèlent des rôles différents : Clémentine, par exemple, se distingue par son intermédiarité, qui mesure à quel point elle relie différentes parties du réseau. Enfin, les recherches Google suggèrent que la popularité peut aussi compter : les candidats dont le nom suscite un intérêt plus soutenu semblent revenir un peu plus souvent. Cet indice reste toutefois limité, car il mesure la durée de l’intérêt dans l’année, pas le volume total des recherches.
+
+En réponse à notre problématique, les résultats suggèrent donc que le parcours dans l’aventure (notamment la durée de survie et l’accès à la finale) est le facteur le plus nettement associé au retour. La popularité et la position dans le réseau apportent des éclairages complémentaires : elles peuvent aider à repérer des candidats connus ou connectés, mais ne suffisent pas à expliquer à elles seules les choix de retour. Ces résultats décrivent des associations et ne permettent pas de prouver qu’un facteur cause directement le rappel d’un candidat.
+
+Une piste pour prolonger ce travail serait d’étudier les relations réelles entre les participants. Comme nous ne disposons pas de données sur leurs liens personnels, nous avons relié les candidats uniquement parce qu’ils ont partagé une saison. Des informations sur leurs affinités ou leurs caractéristiques communes permettraient d’explorer l’homophilie, c’est-à-dire la tendance de personnes semblables à nouer des relations entre elles.
