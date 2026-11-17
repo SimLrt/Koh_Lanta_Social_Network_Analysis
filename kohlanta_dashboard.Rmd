@@ -444,7 +444,7 @@ ggplot2::ggplot(data.frame(distance = distances_reseau)) +
 
 ### Interprétation — Lien {data-width="50"}
 
-Le degré compte les aventuriers avec lesquels une personne a partagé une saison. La moyenne est de 22,02 et la médiane de 20 : un participant typique a donc environ vingt co-participants distincts dans ce réseau. Les valeurs très élevées correspondent surtout aux aventuriers revenus dans plusieurs saisons, qui ont mécaniquement rencontré davantage de candidats.
+Le degré compte les aventuriers avec lesquels une personne a partagé une saison. La moyenne est de 22,02 et la médiane de 20 : un participant typique a donc environ vingt co-participants distincts dans ce réseau. Les valeurs très élevées correspondent surtout aux aventuriers revenus dans plusieurs saisons, qui ont mécaniquement rencontré davantage de candidats. Il est bon de rappeler qu'une saison de Koh Lanta réunit entre 16 et 24 aventuriers.
 
 ### Interprétation — Distances {data-width="50"}
 
@@ -478,11 +478,11 @@ ggplot2::ggplot(top_intermediarite) +
 
 ### Interprétation — degré {data-width="50"}
 
-Freddy (76), Ugo (72) et Teheiura (69) arrivent en tête. Ils ont partagé une ou plusieurs saisons avec beaucoup d’autres candidats. Leur position centrale reflète en partie leurs retours dans l’émission ; elle ne signifie pas à elle seule qu’ils ont été les plus influents dans le jeu.
+Freddy (76), Ugo (72) et Teheiura (69) arrivent en tête. Ils ont partagé une ou plusieurs saisons avec beaucoup d’autres candidats. Leur position centrale reflète leurs retours dans l’émission ; elle ne signifie pas à elle seule qu’ils ont été les plus influents dans le jeu.
 
 ### Interprétation — intermédiarité {data-width="50"}
 
-Ce graphique repère les personnes qui se trouvent souvent sur les chemins les plus courts entre différentes parties du réseau. Parmi les aventuriers les plus connectés, Clémentine a l’intermédiarité la plus élevée (11 237), devant Freddy (9 713) et Ugo (9 563). Elle peut donc relier des groupes de candidats qui se croisent moins souvent. C’est une centralité différente du simple nombre de co-participants.
+Ce graphique repère les personnes qui se trouvent souvent sur les chemins les plus courts entre différentes parties du réseau. Parmi les aventuriers les plus connectés, Clémentine a l’intermédiarité la plus élevée (11 237), devant Freddy (9 713) et Ugo (9 563). Elle met en relation des groupes de candidats de saisons différentes, dont la plupart des membres n'ont pas participé à une même saison.
 
 ## Row {data-height="480"}
 
@@ -491,16 +491,16 @@ Ce graphique repère les personnes qui se trouvent souvent sur les chemins les p
 ```{r}
 knitr::kable(
   head(tableau_centralites[order(-tableau_centralites$Degre),
-                           c("Participant", "Degre", "Proximite", "Intermediarite", "Vecteur_propre")], 12),
-  digits = 3,
+                           c("Participant", "Degre", "Proximite", "Intermediarite", "Vecteur_propre")], 10),
+  digits = 4,
   col.names = c("Participant", "Degré", "Proximité", "Intermédiarité", "Vecteur propre"),
-  caption = "12 participants au degré le plus élevé"
+  caption = "10 participants au degré le plus élevé"
 )
 ```
 
 ### Interprétation — centralités {data-width="35"}
 
-Il confirme que le classement dépend de la mesure choisie : Freddy a le plus de liens directs, tandis que Clémentine ressort particulièrement comme intermédiaire. Le vecteur propre favorise les personnes reliées à d’autres personnes centrales ; Freddy y arrive en tête. Les valeurs de proximité affichées sont toutes arrondies à 0,001, donc ce tableau ne permet pas vraiment de départager les participants sur ce critère.
+Il confirme que le classement dépend de la mesure choisie : Freddy a le plus de liens directs, tandis que Clémentine ressort particulièrement comme intermédiaire. Le vecteur propre favorise les personnes reliées à d’autres personnes centrales ; Freddy y arrive en tête. La proximité qui a une valeur plus élevée indique qu’un participant est, en moyenne, plus proche des autres par les chemins les plus courts, ici parmi les dix participants présentés, les valeurs de proximité sont similaires. Leur position moyenne par rapport aux autres sommets du réseau est donc comparable selon cet indicateur.
 
 ```{r prep-retours, include=FALSE}
 # ---- Données et préparation (identique à analyses_lucie_graphiques.R) ----
@@ -880,7 +880,7 @@ Les revenants se distinguent surtout par leur parcours dans leur saison d'origin
 
 -   **Votes reçus** : le nombre de votes est très inégal selon les candidats, donc sur une échelle normale quelques valeurs très élevées écraseraient tout le graphique. Nous avons utilisé une échelle logarithmique, qui rapproche les grandes valeurs pour rendre les écarts lisibles. On ajoute 1 aux votes avant le calcul (log(1 + votes)) car le logarithme n'existe pas pour 0. Les revenants reçoivent plus de votes. Cependant, plus on reste longtemps, plus on a d'occasions d'être voté, ce qui peut suffire à expliquer l'écart.
 
--   **Âge** : les deux distributions sont presque identiques (médiane autour de 32-33 ans). L'âge ne semble pas jouer sur les profils rappelés pour une autre saison. Il est important de notifier que nous avons des données manquantes pour l'âge de première participation.
+-   **Âge** : les deux distributions sont presque identiques (médiane autour de 32-33 ans). L'âge ne semble pas jouer sur les profils rappelés pour une autre saison.
 
 ## Row {data-height="420"}
 
@@ -1071,7 +1071,7 @@ On remarque que les candidats qui ont participé 2 ou 3 fois ont un indice lég�
 top15 <- av2 %>%
   arrange(desc(recherche_google)) %>%
   head(15) %>%
-  mutate(label = Id,   
+  mutate(label = Id,
          texte_barre = paste0(nb_participations,
                               ifelse(nb_participations > 1, " participations", " participation")))
 
@@ -1142,15 +1142,15 @@ On remarque que les revenants ont moins souvent un intérêt court dans le temps
 
 # Conclusion
 
-## Conclusion {data-height="800"}
+## Conclusion {data-height=800}
 
-### {data-width=50}
+### {data-width=40}
 
 ```{r conclusion-photo, out.width="100%", fig.align="center"}
-knitr::include_graphics("media-137890.jpg")
+knitr::include_graphics("media-141607.webp")
 ```
 
-### {data-width=50}
+### {data-width=60}
 
 Notre analyse montre que plusieurs facteurs sont associés au retour d’un candidat dans Koh-Lanta, mais qu’ils ne jouent pas tous le même rôle. Le parcours dans l’aventure ressort nettement : les candidats qui restent longtemps et atteignent la finale reviennent plus souvent. Dans nos données, 71 % des finalistes sont revenus, contre 41 % des vainqueurs et 12 % des candidats éliminés. Les performances aux épreuves vont dans le même sens : les revenants en ont généralement gagné davantage, même si ces résultats peuvent aussi s’expliquer par le fait qu’ils ont passé plus de temps dans le jeu.
 
@@ -1158,4 +1158,4 @@ Le réseau complète cette analyse en montrant quels aventuriers occupent une pl
 
 En réponse à notre problématique, les résultats suggèrent donc que le parcours dans l’aventure (notamment la durée de survie et l’accès à la finale) est le facteur le plus nettement associé au retour. La popularité et la position dans le réseau apportent des éclairages complémentaires : elles peuvent aider à repérer des candidats connus ou connectés, mais ne suffisent pas à expliquer à elles seules les choix de retour. Ces résultats décrivent des associations et ne permettent pas de prouver qu’un facteur cause directement le rappel d’un candidat.
 
-Une piste pour prolonger ce travail serait d’étudier les relations réelles entre les participants. Comme nous ne disposons pas de données sur leurs liens personnels, nous avons relié les candidats uniquement parce qu’ils ont partagé une saison. Des informations sur leurs affinités ou leurs caractéristiques communes permettraient d’explorer l’homophilie, c’est-à-dire la tendance de personnes semblables à nouer des relations entre elles.
+Une piste pour prolonger ce travail serait d’étudier les relations réelles entre les participants. Comme nous ne disposons pas de données sur leurs liens personnels au sein de l'aventure, nous avons relié les candidats uniquement parce qu’ils ont partagé une saison. Des informations sur leurs affinités ou leurs caractéristiques communes permettraient d’explorer l’homophilie, c’est-à-dire la tendance de personnes semblables à nouer des relations entre elles.
